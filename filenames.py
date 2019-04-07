@@ -4,8 +4,8 @@ from socket import gethostname
 from pathlib import Path
 from argparse import Namespace
 
-mimic_path = Path('./data/mimic3')
-eicu_path = Path('./data/eicu')
+mimic_path = Path('./data/mimic3/gz')
+eicu_path = Path('./data/eicu/gz')
 ext = '.csv.gz'
 
 mimic_files = Namespace(
