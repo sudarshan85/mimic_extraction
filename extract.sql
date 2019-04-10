@@ -13,17 +13,15 @@ select pat.subject_id, pat.gender, pat.dob, pat.dod
 , icu.icustay_id, icu.intime, icu.outtime, icu.los
 
 -- in years
-, round((cast(extract(epoch from adm.admittime - pat.dob)/(60*60*24*365.242) as numeric)), 4) as
+, round((cast(extract(epoch from adm.admittime - pat.dob)/(60*60*24*365.242) as numeric)), 2) as
 admission_age
 -- in days
-, round((cast(extract(epoch from adm.dischtime - adm.admittime)/(60*60*24) as numeric)), 4) as
+, round((cast(extract(epoch from adm.dischtime - adm.admittime)/(60*60*24) as numeric)), 2) as
 los_hospital
 
 -- wait time between hospital admission and icu intime in hours
-, round((cast(extract(epoch from icu.intime - adm.admittime)/(60*60) as numeric)), 4) as wait_time
+, round((cast(extract(epoch from icu.intime - adm.admittime)/(60*60) as numeric)), 2) as wait_time
 
--- sequence of hospital admissions 
-, dense_rank() over (partition by pat.subject_id order by adm.admittime) as hospstay_seq
 -- mark the first hospital stay
 , case
   when dense_rank() over (partition by pat.subject_id order by adm.admittime) = 1 then true
@@ -33,8 +31,6 @@ los_hospital
     pat.subject_id order by adm.admittime) )/(60*60*30) as numeric)), 2) > 30.0 then true
   else false end as first_hosp_stay
 
--- sequence of icu admissions for current hospital admission
-, dense_rank() over (partition by adm.hadm_id order by icu.intime) as icustay_seq
 -- mark the first icu stay for current hospital admission
 , case
   when dense_rank() over (partition by adm.hadm_id order by icu.intime) = 1 then true
@@ -47,6 +43,11 @@ inner join patients pat
     on adm.subject_id = pat.subject_id
 where adm.has_chartevents_data = 1
 order by pat.subject_id, adm.admittime, icu.intime;
+
+-- sequence of hospital admissions 
+-- , dense_rank() over (partition by pat.subject_id order by adm.admittime) as hospstay_seq
+-- sequence of icu admissions for current hospital admission
+-- , dense_rank() over (partition by adm.hadm_id order by icu.intime) as icustay_seq
 
 -- , lag(adm.admittime, 1) over (partition by pat.subject_id order by adm.admittime) as prev
 -- , round((cast(extract(epoch from adm.admittime - lag(adm.admittime, 1) over (partition by pat.subject_id order by adm.admittime) )/(60*60*30) as numeric)), 2) as diff -- in months
