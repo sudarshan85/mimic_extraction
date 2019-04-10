@@ -15,11 +15,15 @@ select pat.subject_id, pat.gender, pat.dob, pat.dod
 , round((cast(extract(epoch from adm.admittime - pat.dob)/(60*60*24*365.242) as numeric)), 4) as admission_age -- in years
 , round((cast(extract(epoch from adm.dischtime - adm.admittime)/(60*60*24) as numeric)), 4) as los_hospital -- in days
 
+, lag(adm.admittime, 1) over (partition by pat.subject_id order by adm.admittime) as prev
+-- , lag(adm.admittime, 1) over (partition by pat.subject_id order by adm.admittime) as prev
+, round((cast(extract(epoch from adm.admittime - lag(adm.admittime, 1) over (partition by pat.subject_id order by adm.admittime) )/(60*60*30) as numeric)), 2) as diff -- in months
+
 -- wait time between hospital admission and icu intime
 , round((cast(extract(epoch from icu.intime - adm.admittime)/(60*60) as numeric)), 4) as wait_time -- in hours 
 
 -- sequence of hospital admissions 
-, dense_rank() over (partition by pat.subject_id order by admittime) as hospstay_seq
+, dense_rank() over (partition by pat.subject_id order by adm.admittime) as hospstay_seq
 -- mark the first hospital stay
 , case
   when dense_rank() over (partition by pat.subject_id order by adm.admittime) = 1 then true
@@ -38,9 +42,9 @@ inner join admissions adm
 inner join patients pat
     on adm.subject_id = pat.subject_id
 where adm.has_chartevents_data = 1
-and round((cast(extract(epoch from icu.intime - adm.admittime)/(60*60) as numeric)), 4)  > 0.0
 order by pat.subject_id, adm.admittime, icu.intime;
 
+-- and round((cast(extract(epoch from icu.intime - adm.admittime)/(60*60) as numeric)), 4)  > 0.0
 -- icu level factors
 -- select ie.subject_id, ie.hadm_id, ie.icustay_id, ie.intime, ie.outtime, ie.los
 
