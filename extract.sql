@@ -55,7 +55,7 @@ inner join admissions adm
   on adm.subject_id = pat.subject_id
 inner join icustays icu
   on icu.hadm_id = adm.hadm_id
-inner join proxy_ne ne
+inner join noteevents ne
   on ne.hadm_id = adm.hadm_id
 where adm.has_chartevents_data = 1
 and ne.iserror is null
