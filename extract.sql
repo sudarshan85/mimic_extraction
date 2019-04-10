@@ -14,13 +14,17 @@ select pat.subject_id, pat.gender, pat.dob, pat.dod
 
 -- noteevents
 , ne.chartdate, ne.charttime, ne.storetime, ne.category, ne.description, ne.text
+-- in hours 
+, round((cast(extract(epoch from ne.storetime - ne.charttime)/(60*60) as numeric)), 2) as
+store_period
 
 -- in hours 
-, round((cast(extract(epoch from ne.storetime - adm.admittime)/(60*60) as numeric)), 2) as write
+, round((cast(extract(epoch from ne.charttime - adm.admittime)/(60*60) as numeric)), 2) as
+note_period
 , case
-  when cast(extract(epoch from ne.storetime - adm.admittime)/(60*60) as numeric) <
+  when cast(extract(epoch from ne.charttime - adm.admittime)/(60*60) as numeric) <
     cast(extract(epoch from icu.intime - adm.admittime)/(60*60) as numeric) then true
-  else false end as note_flag
+  else false end as note_flag 
 
 -- in years
 , round((cast(extract(epoch from adm.admittime - pat.dob)/(60*60*24*365.242) as numeric)), 2) as
@@ -30,7 +34,7 @@ admission_age
 los_hospital
 
 -- wait time between hospital admission and icu intime in hours
-, round((cast(extract(epoch from icu.intime - adm.admittime)/(60*60) as numeric)), 2) as wait_time
+, round((cast(extract(epoch from icu.intime - adm.admittime)/(60*60) as numeric)), 2) as wait_period
 
 -- mark the first hospital stay
 , case
@@ -39,12 +43,12 @@ los_hospital
 -- shown here: http://bit.ly/2KpJaeg
   when round((cast(extract(epoch from adm.admittime - lag(adm.admittime, 1) over (partition by
     pat.subject_id order by adm.admittime) )/(60*60*30) as numeric)), 2) > 30.0 then true
-  else false end as first_hosp_stay
+  else false end as adm_flag
 
 -- mark the first icu stay for current hospital admission
 , case
   when dense_rank() over (partition by adm.hadm_id order by icu.intime) = 1 then true
-  else false end as first_icu_stay
+  else false end as icu_flag
 
 from patients pat
 inner join admissions adm
@@ -55,21 +59,11 @@ inner join proxy_ne ne
   on ne.hadm_id = adm.hadm_id
 where adm.has_chartevents_data = 1
 and ne.iserror is null
+-- and ne.charttime between adm.admittime and icu.intime
 order by pat.subject_id, adm.admittime, icu.intime;
 
--- from icustays icu
--- inner join admissions adm
-    -- on icu.hadm_id = adm.hadm_id
--- inner join patients pat
-    -- on adm.subject_id = pat.subject_id
--- inner join proxy_ne ne
-    -- on ne.hadm_id = adm.hadm_id
--- where adm.has_chartevents_data = 1
--- and ne.iserror is null
--- order by pat.subject_id, adm.admittime, icu.intime;
-
--- noteevents
--- , ne.charttime, ne.storetime, ne.category, ne.description, ne.text
+-- discard records where admittime is > icu intime
+-- and round((cast(extract(epoch from icu.intime - adm.admittime)/(60*60) as numeric)), 4)  > 0.0
 
 -- -- in hours 
 -- , round((cast(extract(epoch from ne.storetime - adm.admittime)/(60*60) as numeric)), 2) as write
