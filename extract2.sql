@@ -1,5 +1,5 @@
-drop materialized view if exists co cascade;
-create materialized view co as
+drop materialized view if exists co2 cascade;
+create materialized view co2 as
 
 -- patient level factors
 select pat.subject_id, pat.gender, pat.dob, pat.dod
