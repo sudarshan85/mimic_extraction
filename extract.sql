@@ -12,6 +12,9 @@ select pat.subject_id, pat.gender, pat.dob, pat.dod
 -- icu level factors
 , icu.icustay_id, icu.intime, icu.outtime, icu.los
 
+-- noteevents
+-- , ne.chartdate, ne.charttime, ne.storetime, ne.category, ne.description
+
 -- in years
 , round((cast(extract(epoch from adm.admittime - pat.dob)/(60*60*24*365.242) as numeric)), 2) as
 admission_age
@@ -41,7 +44,10 @@ inner join admissions adm
   on adm.subject_id = pat.subject_id
 inner join icustays icu
   on icu.hadm_id = adm.hadm_id
+-- inner join noteevents ne
+  -- on ne.hadm_id = adm.hadm_id
 where adm.has_chartevents_data = 1
+-- and ne.iserror is null
 order by pat.subject_id, adm.admittime, icu.intime;
 
 -- from icustays icu
