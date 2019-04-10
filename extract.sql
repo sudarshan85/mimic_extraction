@@ -12,6 +12,16 @@ select pat.subject_id, pat.gender, pat.dob, pat.dod
 -- icu level factors
 , icu.icustay_id, icu.intime, icu.outtime, icu.los
 
+-- noteevents
+, ne.charttime, ne.storetime, ne.category, ne.description, ne.text
+
+-- in hours 
+, round((cast(extract(epoch from ne.storetime - adm.admittime)/(60*60) as numeric)), 2) as write
+
+, case
+  when cast(extract(epoch from ne.storetime - adm.admittime)/(60*60) as numeric) < cast(extract(epoch from icu.intime - adm.admittime)/(60*60) as numeric) then true
+  else false end as note_flag
+
 -- in years
 , round((cast(extract(epoch from adm.admittime - pat.dob)/(60*60*24*365.242) as numeric)), 2) as
 admission_age
@@ -41,7 +51,10 @@ inner join admissions adm
     on icu.hadm_id = adm.hadm_id
 inner join patients pat
     on adm.subject_id = pat.subject_id
+inner join proxy_ne ne
+    on ne.hadm_id = adm.hadm_id
 where adm.has_chartevents_data = 1
+and ne.iserror is null
 order by pat.subject_id, adm.admittime, icu.intime;
 
 -- sequence of hospital admissions 
