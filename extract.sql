@@ -25,13 +25,19 @@ case
 -- mark the first icu stay for current hospital admission
 case
   when dense_rank() over (partition by adm.hadm_id order by icu.intime) = 1 then true
-  else false end as include_icu
+  else false end as include_icu,
+
+-- time period between hospital admission and its 1st icu visit in hours
+round((cast(extract(epoch from icu.intime - adm.admittime)/(60*60) as numeric)), 2) as wait_period
 
 from patients pat
 inner join admissions adm
   on adm.subject_id = pat.subject_id
 inner join icustays icu
   on icu.hadm_id = adm.hadm_id
+where adm.has_chartevents_data = 1
+-- discard records which as icu intime earlier than hospital admission time
+and round((cast(extract(epoch from icu.intime - adm.admittime)/(60*60) as numeric)), 2) > 0.0
 order by pat.subject_id, adm.admittime, icu.intime;
 
 -- these were used for creating query for marking hospital adms
