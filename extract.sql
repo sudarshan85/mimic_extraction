@@ -30,11 +30,11 @@ icu_ne_period
 
 -- time period between echo hospital admission and echo charttime
 , round((cast(extract(epoch from ech.charttime - adm.admittime)/(60*60) as numeric)), 2) as
-echo_adm_period
+ech_adm_period
 
 -- time period between echo hospital admission and echo charttime
 , round((cast(extract(epoch from icu.intime - ech.charttime)/(60*60) as numeric)), 2) as
-icu_echo_period
+icu_ech_period
 
 , case
 -- mark the first hospital adm 
@@ -56,7 +56,7 @@ inner join admissions adm
 inner join icustays icu
   on icu.hadm_id = adm.hadm_id
 left join noteevents ne
-  on ne.hadm_id = icu.hadm_id
+  on ne.hadm_id = adm.hadm_id
 left join echodata ech
   on ech.hadm_id = adm.hadm_id
 where adm.has_chartevents_data = 1
