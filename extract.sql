@@ -9,8 +9,9 @@ select pat.subject_id
 -- icu level factors
 , icu.icustay_id, icu.intime
 -- noteevents
-, ne.charttime
+, ne.charttime as note_charttime
 -- echodata
+, ech.charttime as echo_charttime
 
 -- age at admission in years
 , round((cast(extract(epoch from adm.admittime - pat.dob)/(60*60*24*365.242) as numeric)), 2) as
@@ -26,6 +27,14 @@ ne_adm_period
 -- time period between note charttime and first icu visit in hours
 , round((cast(extract(epoch from icu.intime - ne.charttime)/(60*60) as numeric)), 2) as
 icu_ne_period
+
+-- time period between echo hospital admission and echo charttime
+, round((cast(extract(epoch from ech.charttime - adm.admittime)/(60*60) as numeric)), 2) as
+echo_adm_period
+
+-- time period between echo hospital admission and echo charttime
+, round((cast(extract(epoch from icu.intime - ech.charttime)/(60*60) as numeric)), 2) as
+icu_echo_period
 
 , case
 -- mark the first hospital adm 
@@ -48,10 +57,12 @@ inner join icustays icu
   on icu.hadm_id = adm.hadm_id
 left join noteevents ne
   on ne.hadm_id = icu.hadm_id
+left join echodata ech
+  on ech.hadm_id = adm.hadm_id
 where adm.has_chartevents_data = 1
 -- discard records which as icu intime earlier than hospital admission time
 and round((cast(extract(epoch from icu.intime - adm.admittime)/(60*60) as numeric)), 2) > 0.0
--- and ne.iserror is null
+and ne.iserror is null
 order by pat.subject_id, adm.admittime;
 
 -- these were used for creating query for marking hospital adms
