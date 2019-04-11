@@ -42,7 +42,7 @@ los_hospital
 -- include in first_hosp_stay if its been atleast a month since prvious admission. Using lag() as
 -- shown here: http://bit.ly/2KpJaeg
   when round((cast(extract(epoch from adm.admittime - lag(adm.admittime, 1) over (partition by
-    pat.subject_id order by adm.admittime) )/(60*60*30) as numeric)), 2) > 30.0 then true
+    pat.subject_id order by adm.admittime) )/(60*60*24) as numeric)), 2) > 30.0 then true
   else false end as adm_flag
 
 -- mark the first icu stay for current hospital admission
