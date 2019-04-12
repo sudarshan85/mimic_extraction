@@ -7,6 +7,7 @@
 drop materialized view if exists co cascade;
 create materialized view co as
 
+-- Grab data from icustays table joining on hadm_id
 with admicu as 
 (
   select adm.hadm_id, adm.admittime
@@ -34,6 +35,7 @@ with admicu as
   inner join icustays icu
     on icu.hadm_id = adm.hadm_id
 )
+-- Grab data from the patients table joining on subject_id
 , patadm as
 (
   select pat.subject_id, pat.dob, pat.dod
@@ -52,22 +54,33 @@ with admicu as
     on adm.subject_id = pat.subject_id
   where adm.has_chartevents_data = 1
 )
-, notes as
+-- Grab echodata and notes data by first join both using row_id as specified here:
+-- http://bit.ly/2Zh3phU
+, echonotes as
 (
-  select ne.row_id, ne.charttime, ne.hadm_id from noteevents ne left join echodata ech on ech.row_id
-  = ne.row_id
+  select ne.row_id, ne.subject_id, ne.hadm_id, ne.chartdate, ne.charttime, ne.storetime,
+  ne.category, ne.description, ne.cgid, ne.iserror, ne.text, ech.indication, ech.height, ech.weight,
+  ech.bsa, ech.bp, ech.bpsys, ech.bpdias, ech.hr, ech.status, ech.test, ech.doppler, ech.contrast,
+  ech.technicalquality 
+
+  from noteevents ne
+  left join echodata ech
+    on ech.row_id = ne.row_id
+  where ne.iserror is null
 )
 
 select pa.subject_id
-, pa.dob, pa.hadm_id, pa.admittime, pa.dischtime, pa.admission_age, pa.los_hospital
-, ai.icustay_id, ai.intime, ai.wait_period, ai.include_adm, ai.include_icu
-, n.charttime
+, pa.hadm_id, ai.icustay_id, pa.admission_age, pa.admittime, ai.intime, en.charttime
+, ai.wait_period, pa.los_hospital, en.height, en.weight, en.bsa, en.bpsys, en.bpdias
+, en.hr, en.status, en.technicalquality, en.contrast, en.doppler, en.test, en.indication
+, en.category, en.description, en.text
+, ai.include_adm, ai.include_icu
 
 from patadm pa
 inner join admicu ai
   on ai.hadm_id = pa.hadm_id
-inner join notes n
-  on n.hadm_id = pa.hadm_id
+inner join echonotes en
+  on en.hadm_id = pa.hadm_id
 order by pa.subject_id, pa.admittime;
 
 -- -- Grab data from the patients table joining on subject_id
