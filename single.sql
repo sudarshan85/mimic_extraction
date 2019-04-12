@@ -9,7 +9,7 @@ drop materialized view if exists admicu cascade;
 create materialized view admicu as
 
 select adm.hadm_id
-, adm.admittime, adm.dischtime
+, adm.admittime
 , icu.icustay_id, icu.intime
 
 -- time period between hospital admission and its 1st icu visit in hours
@@ -43,7 +43,8 @@ select adm.hadm_id
 
 from admissions adm
 inner join noteevents ne
-  on ne.hadm_id = adm.hadm_id;
+  on ne.hadm_id = adm.hadm_id
+where ne.iserror is null;
 
 -- Grab data between echodata materialized view created by http://bit.ly/2Zh3phU
 -- joinong on hadm_id
