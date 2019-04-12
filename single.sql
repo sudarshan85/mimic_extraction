@@ -34,30 +34,31 @@ inner join icustays icu
   on icu.hadm_id = adm.hadm_id;
 
 -- Grab data from noteevents table joining on hadm_id
-drop materialized view if exists admne cascade;
-create materialized view admne as
+-- drop materialized view if exists admne cascade;
+-- create materialized view admne as
 
-select adm.hadm_id
-, adm.admittime
-, ne.charttime as ne_charttime
+-- select adm.hadm_id
+-- , adm.admittime
+-- , ne.charttime as ne_charttime
 
-from admissions adm
-inner join noteevents ne
-  on ne.hadm_id = adm.hadm_id
-where ne.iserror is null;
+-- from admissions adm
+-- inner join noteevents ne
+  -- on ne.hadm_id = adm.hadm_id
+-- where ne.iserror is null;
 
--- Grab data between echodata materialized view created by http://bit.ly/2Zh3phU
--- joinong on hadm_id
-drop materialized view if exists admech cascade;
-create materialized view admech as
+-- -- Grab data between echodata materialized view created by http://bit.ly/2Zh3phU
+-- -- joinong on hadm_id
+-- drop materialized view if exists admech cascade;
+-- create materialized view admech as
 
-select adm.hadm_id
-, adm.admittime
-, ech.charttime as ech_charttime
+-- select adm.hadm_id
+-- , adm.admittime
+-- , ech.charttime as ech_charttime, ech.indication, ech.height, ech.weight, ech.bsa, ech.bpsys
+-- , ech.bpdias, ech.hr, ech.status, 
 
-from admissions adm
-inner join echodata ech
-  on ech.hadm_id = adm.hadm_id;
+-- from admissions adm
+-- inner join echodata ech
+  -- on ech.hadm_id = adm.hadm_id;
 
 -- Grab data from the patients table joining on subject_id
 drop materialized view if exists patadm cascade;
@@ -82,18 +83,39 @@ where adm.has_chartevents_data = 1;
 drop materialized view if exists co cascade;
 create materialized view co as
 
+with notes as (
+  select ne.row_id, ne.charttime, ne.hadm_id from noteevents ne left join echodata ech on ech.row_id
+  = ne.row_id
+)
+
 select pa.subject_id
 , pa.dob, pa.hadm_id, pa.admittime, pa.dischtime, pa.admission_age, pa.los_hospital
 , ai.icustay_id, ai.intime, ai.wait_period, ai.include_adm, ai.include_icu
-, an.ne_charttime 
-, ae.ech_charttime
+, n.charttime
 
 from patadm pa
 inner join admicu ai
   on ai.hadm_id = pa.hadm_id
-inner join admne an
-  on an.hadm_id = pa.hadm_id
-inner join admech ae
-  on ae.hadm_id = pa.hadm_id
+inner join notes n
+  on n.hadm_id = pa.hadm_id
 order by pa.subject_id, pa.admittime;
+
+-- Finally put all the data together in ta final materiazlied view joining on hadm_id
+-- drop materialized view if exists co cascade;
+-- create materialized view co as
+
+-- select pa.subject_id
+-- , pa.dob, pa.hadm_id, pa.admittime, pa.dischtime, pa.admission_age, pa.los_hospital
+-- , ai.icustay_id, ai.intime, ai.wait_period, ai.include_adm, ai.include_icu
+-- , an.ne_charttime 
+-- , ae.ech_charttime
+
+-- from patadm pa
+-- inner join admicu ai
+  -- on ai.hadm_id = pa.hadm_id
+-- inner join admne an
+  -- on an.hadm_id = pa.hadm_id
+-- inner join admech ae
+  -- on ae.hadm_id = pa.hadm_id
+-- order by pa.subject_id, pa.admittime;
 
