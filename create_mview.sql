@@ -39,7 +39,8 @@ with admicu as
 , patadm as
 (
   select pat.subject_id, pat.dob, pat.dod
-  , adm.hadm_id, adm.admittime, adm.dischtime
+  , adm.hadm_id, adm.admittime, adm.dischtime, adm.admission_type, adm.admission_location
+  , adm.insurance, adm.language, adm.religion, adm.marital_status, adm.ethnicity, adm.diagnosis
 
   -- age at admission in years
   , round((cast(extract(epoch from adm.admittime - pat.dob)/(60*60*24*365.242) as numeric)), 2) as
@@ -71,9 +72,10 @@ with admicu as
 
 select pa.subject_id
 , pa.hadm_id, ai.icustay_id, pa.admission_age, pa.admittime, ai.intime, en.charttime
-, ai.wait_period, pa.los_hospital, en.height, en.weight, en.bsa, en.bpsys, en.bpdias
-, en.hr, en.status, en.technicalquality, en.contrast, en.doppler, en.test, en.indication
-, en.category, en.description, en.text
+, ai.wait_period, pa.los_hospital, pa.admission_type, pa.admission_location, pa.insurance
+, pa.language, pa.religion, pa.marital_status, pa.ethnicity, pa.diagnosis, en.height
+, en.weight, en.bsa, en.bpsys, en.bpdias, en.hr, en.status, en.technicalquality, en.contrast
+, en.doppler, en.test, en.indication, en.category, en.description, en.text
 , ai.include_adm, ai.include_icu
 
 from patadm pa
