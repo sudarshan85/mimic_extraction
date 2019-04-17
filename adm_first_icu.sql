@@ -57,30 +57,25 @@ with admicu as
 )
 -- Grab echodata and notes data by first join both using row_id as specified here:
 -- http://bit.ly/2Zh3phU
-, echonotes as
+, notes as
 (
   select ne.row_id, ne.subject_id, ne.hadm_id, ne.chartdate, ne.charttime, ne.storetime,
-  ne.category, ne.description, ne.cgid, ne.iserror, ne.text, ech.indication, ech.height, ech.weight,
-  ech.bsa, ech.bp, ech.bpsys, ech.bpdias, ech.hr, ech.status, ech.test, ech.doppler, ech.contrast,
-  ech.technicalquality 
+  ne.category, ne.description, ne.cgid, ne.iserror, ne.text
 
   from noteevents ne
-  left join echodata ech
-    on ech.row_id = ne.row_id
   where ne.iserror is null
 )
 
 select pa.subject_id
 , pa.hadm_id, ai.icustay_id, pa.admission_age, pa.admittime, ai.intime, en.charttime
 , ai.wait_period, pa.los_hospital, pa.admission_type, pa.admission_location, pa.insurance
-, pa.language, pa.religion, pa.marital_status, pa.ethnicity, pa.diagnosis, en.height
-, en.weight, en.bsa, en.bpsys, en.bpdias, en.hr, en.status, en.technicalquality, en.contrast
-, en.doppler, en.test, en.indication, en.category, en.description, en.text
+, pa.language, pa.religion, pa.marital_status, pa.ethnicity, pa.diagnosis
+, en.category, en.description, en.text
 , ai.include_adm, ai.include_icu
 
 from patadm pa
 inner join admicu ai
   on ai.hadm_id = pa.hadm_id
-inner join echonotes en
+inner join notes en
   on en.hadm_id = pa.hadm_id
 order by pa.subject_id, pa.admittime;
