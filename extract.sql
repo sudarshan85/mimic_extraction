@@ -4,8 +4,8 @@
 -- MIMIC version: MIMIC-III v1.4
 -- ------------------------------------------------------------------
 
-drop materialized view if exists myco cascade;
-create materialized view myco as
+drop materialized view if exists data cascade;
+create materialized view data as
 
 -- Grab data from icustays table joining on hadm_id
 with admicu as 
@@ -62,6 +62,41 @@ with admicu as
 select ai.hadm_id, ai.subject_id, ai.icustay_id, age.admission_age, ai.admittime, ai.dischtime
 , ai.los_hospital, ae.charttime, ai.intime, ai.wait_period
 , ae.category, ae.description, ae.text
+
+  -- time period between charttime and ICU intime
+  , round((cast(extract(epoch from ai.intime- ae.charttime)/(60*60) as numeric)), 2) as chart_period
+
+, case
+  when ae.charttime between ai.intime - interval '12 hours' and ai.intime then 0
+  when ae.charttime between ai.intime - interval '24 hours' and ai.intime - interval '12 hours' then
+    1
+  when ae.charttime between ai.intime - interval '36 hours' and ai.intime - interval '24 hours' then
+    2
+  when ae.charttime between ai.intime - interval '48 hours' and ai.intime - interval '36 hours' then
+    3
+  when ae.charttime between ai.intime - interval '60 hours' and ai.intime - interval '48 hours' then
+    4
+  when ae.charttime between ai.intime - interval '72 hours' and ai.intime - interval '60 hours' then
+    5
+  when ae.charttime between ai.intime - interval '84 hours' and ai.intime - interval '72 hours' then
+    6
+  when ae.charttime between ai.intime - interval '96 hours' and ai.intime - interval '84 hours' then
+    7
+  when ae.charttime between ai.intime - interval '108 hours' and ai.intime - interval '96 hours'
+    then 8
+  when ae.charttime between ai.intime - interval '120 hours' and ai.intime - interval '108 hours'
+    then 9
+  when ae.charttime between ai.intime - interval '132 hours' and ai.intime - interval '120 hours'
+    then 10
+  when ae.charttime between ai.intime - interval '144 hours' and ai.intime - interval '132 hours'
+    then 11
+  when ae.charttime between ai.intime - interval '156 hours' and ai.intime - interval '144 hours'
+    then 12
+  when ae.charttime between ai.intime - interval '168 hours' and ai.intime - interval '156 hours'
+    then 13
+  when ae.charttime between ai.intime - interval '180 hours' and ai.intime - interval '168 hours'
+    then 14
+  else 15 end as chartinterval
 
 from admicu ai
 inner join admne ae
