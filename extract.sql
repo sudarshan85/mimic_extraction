@@ -38,7 +38,8 @@ with admicu as
   from admissions adm
   inner join icustays icu
     on icu.hadm_id = adm.hadm_id
-), admne as
+)
+, admne as
 (
   select adm.hadm_id, ne.charttime, ne.iserror
   , ne.category, ne.description, ne.text
@@ -46,7 +47,8 @@ with admicu as
   from admissions adm
   inner join noteevents ne
     on ne.hadm_id = adm.hadm_id
-), age as
+)
+, age as
 (
   select pat.subject_id, pat.dob
 
@@ -62,9 +64,6 @@ with admicu as
 select ai.hadm_id, ai.subject_id, ai.icustay_id, age.admission_age, ai.admittime, ai.dischtime
 , ai.los_hospital, ae.charttime, ai.intime, ai.wait_period
 , ae.category, ae.description, ae.text
-
--- time period between charttime and ICU intime
-, round((cast(extract(epoch from ai.intime- ae.charttime)/(60*60) as numeric)), 2) as chart_period
 
 , case
   when ae.charttime between ai.intime - interval '1 day' and ai.intime then 0
@@ -119,6 +118,7 @@ age.admission_age >= 15.0 and
 ae.charttime between admittime and intime and
 -- discard documented erroneous notes
 ae.iserror is null 
+-- length(ae.text) between 500 and 6000 and
 order by ai.hadm_id, ai.intime;
 
 -- , case
