@@ -1,6 +1,5 @@
 -- ------------------------------------------------------------------
--- Title: Gather data of patients between their hospital admission
---        and first ICU visit
+-- Description: Gather clinical notes for predicting first ICU visit
 -- MIMIC version: MIMIC-III v1.4
 -- ------------------------------------------------------------------
 
