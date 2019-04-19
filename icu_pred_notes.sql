@@ -60,7 +60,7 @@ with admicu as
     on adm.subject_id = pat.subject_id
 )
 
-select ai.hadm_id, ai.subject_id, ai.icustay_id, age.admission_age, ai.admittime, ai.dischtime
+select ai.hadm_id, ai.subject_id, ai.icustay_id, ai.admittime, age.admission_age, ai.dischtime
 , ai.los_hospital, ae.charttime, ai.intime, ai.wait_period
 , ae.category, ae.description, ae.text
 
