@@ -64,6 +64,7 @@ select ai.hadm_id, ai.subject_id, ai.icustay_id, age.admission_age, ai.admittime
 , ai.los_hospital, ae.charttime, ai.intime, ai.wait_period
 , ae.category, ae.description, ae.text
 
+-- mark charttimes relative to ICU intime
 , case
   when ae.charttime between ai.intime - interval '1 day' and ai.intime then 0
   when ae.charttime between ai.intime - interval '2 days' and ai.intime - interval '1 day' then 1
@@ -87,6 +88,7 @@ select ai.hadm_id, ai.subject_id, ai.icustay_id, age.admission_age, ai.admittime
     14 
   else 15 end as chartinterval
 
+-- create labels for charttimes
 , case
   when ae.charttime between ai.intime - interval '1 day' and ai.intime then -1
   when ae.charttime between ai.intime - interval '3 days' and ai.intime - interval '1 day' then
