@@ -1,3 +1,4 @@
 # MIMIC Data Extraction
 
-Extract data from MIMIC-III database for building models for different tasks.
+Repository to hold scripts and code for extracting data from MIMIC-III database and seting up the
+extracted data for experimentation.
