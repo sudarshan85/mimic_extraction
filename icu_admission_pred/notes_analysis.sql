@@ -22,6 +22,9 @@ with admne as
 select ie.hadm_id, ie.subject_id, ie.icustay_id, ae.charttime, ie.intime
 , ae.category, ae.description, ae.text
 
+, round((cast(extract(epoch from ie.intime - ae.charttime)/(60*60*24) as numeric)), 2) as
+note_wait_time
+
 , case
   when ae.charttime between ie.intime - interval '1 day' and ie.intime then 0
   when ae.charttime between ie.intime - interval '2 days' and ie.intime - interval '1 day' then 1
