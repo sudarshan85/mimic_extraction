@@ -9,7 +9,8 @@ create materialized view notes as
 with admne as
 (
   select adm.hadm_id, ne.charttime
-  , ne.category, ne.description, ne.text
+  , ne.category
+  , ne.description, ne.text
 
   from admissions adm
   inner join noteevents ne
@@ -18,9 +19,37 @@ with admne as
   ne.iserror is null and
   ne.charttime is not null
 )
+, icu as
+(
+  select ie.intime, ie.hadm_id, ie.icustay_id
 
-select ie.hadm_id, ie.subject_id, ie.icustay_id, ae.charttime, ie.intime
-, ae.category, ae.description, ae.text
+  , case
+      when dense_rank() over (partition by ie.hadm_id order by ie.intime) = 1 then true
+      else false end as include_icu
+
+  from icustays ie
+)
+, adms as
+(
+  select adm.hadm_id, adm.subject_id, adm.has_chartevents_data, adm.dischtime, adm.admittime
+
+  , case
+  -- mark the first hospital adm 
+      when dense_rank() over (partition by adm.subject_id order by adm.admittime) = 1 then true
+  -- mark subsequent hospital adms if its been atleast a month since previous admission.
+  -- Defined using lag() as shown here: http://bit.ly/2KpJaeg
+      when round((cast(extract(epoch from adm.admittime - lag(adm.admittime, 1) over (partition by
+        adm.subject_id order by adm.admittime))/(60*60*24) as numeric)), 2) >= 30.0 then true
+      else false end as include_adm
+
+  from admissions adm
+)
+
+select adm.hadm_id, adm.subject_id, ie.icustay_id, ae.charttime, ie.intime, ae.category
+, ae.description, ae.text
+
+, round((cast(extract(epoch from adm.admittime - pat.dob)/(60*60*24*365.242) as numeric)), 2) as
+admission_age
 
 , round((cast(extract(epoch from ie.intime - ae.charttime)/(60*60*24) as numeric)), 2) as
 note_wait_time
@@ -48,8 +77,17 @@ note_wait_time
     14 
   else 15 end as chartinterval
 
-from icustays ie
+from adms adm
+inner join icu ie
+  on ie.hadm_id = adm.hadm_id
 inner join admne ae
   on ae.hadm_id = ie.hadm_id
+inner join patients pat 
+  on pat.subject_id = adm.subject_id
 where
-ae.charttime <= ie.intime;
+ae.charttime <= ie.intime and
+adm.has_chartevents_data = 1 and
+adm.dischtime > adm.admittime and
+ie.intime > adm.admittime and
+adm.include_adm = true and
+round((cast(extract(epoch from adm.admittime - pat.dob)/(60*60*24*365.242) as numeric)), 2) >= 15.0; 
