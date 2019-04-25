@@ -29,6 +29,10 @@ with inter as
   , round((cast(extract(epoch from adm.admittime - pat.dob)/(60*60*24*365.242) as numeric)), 2) as
   admission_age
 
+  -- time period between hospital admission and its 1st icu visit in days 
+  , round((cast(extract(epoch from ie.intime - adm.admittime)/(60*60*24) as numeric)), 2) as
+  wait_period
+
   , round((cast(extract(epoch from ie.intime - ne.charttime)/(60*60*24) as numeric)), 2) as
   note_wait_time
 
@@ -81,8 +85,8 @@ with inter as
   ne.iserror is null 
 )
 
-select hadm_id, subject_id, icustay_id, admission_age, admittime, charttime, intime, note_wait_time
-, category, chartinterval, description, text , class_label
+select hadm_id, subject_id, icustay_id, admission_age, admittime, charttime, intime, wait_period
+, note_wait_time, category, chartinterval, description, text , class_label
 
 from inter
 where
