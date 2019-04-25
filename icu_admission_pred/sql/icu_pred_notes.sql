@@ -69,11 +69,16 @@ with inter as
   inner join noteevents ne on adm.hadm_id = ne.hadm_id
   inner join patients pat on pat.subject_id = adm.subject_id
   where
-  ne.iserror is null and
-  ne.charttime between adm.admittime and ie.intime and
+  -- subjects should have recorded chartevents data
   adm.has_chartevents_data = 1 and
+  -- discard subjects who have discharge time earlier than admittime
   adm.dischtime > adm.admittime and
-  ie.intime > adm.admittime
+  -- discard subjects who have ICU intime earlier than admittime
+  ie.intime > adm.admittime and
+  -- only include notes which are chartted between admittime and ICU intime
+  ne.charttime between adm.admittime and ie.intime and
+  -- discard documented erroneous notes
+  ne.iserror is null 
 )
 
 select hadm_id, subject_id, icustay_id, admission_age, admittime, charttime, intime, note_wait_time
@@ -81,7 +86,10 @@ select hadm_id, subject_id, icustay_id, admission_age, admittime, charttime, int
 
 from inter
 where
-include_icu = true and
+-- only include subjects with one admission or previous admission more than 30 days ago
 include_adm = true and
+-- only include subjects' first ICU visit for that admission
+include_icu = true and
+-- only include adult subjects
 admission_age >= 15.0
 order by hadm_id, icustay_id;
