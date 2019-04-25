@@ -63,8 +63,8 @@ with inter as
 
   from admissions adm
   inner join icustays ie on adm.hadm_id = ie.hadm_id
-  inner join patients pat on pat.subject_id = adm.subject_id
   inner join noteevents ne on adm.hadm_id = ne.hadm_id
+  inner join patients pat on pat.subject_id = adm.subject_id
   where
   ne.iserror is null and
   ne.charttime between adm.admittime and ie.intime and
@@ -80,4 +80,5 @@ from inter
 where
 include_icu = true and
 include_adm = true and
-admission_age >= 15.0;
+admission_age >= 15.0
+order by hadm_id, icustay_id;
