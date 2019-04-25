@@ -77,6 +77,15 @@ note_wait_time
     14 
   else 15 end as chartinterval
 
+-- create labels for charttimes
+, case
+  when ae.charttime between ie.intime - interval '1 day' and ie.intime then -1
+  when ae.charttime between ie.intime - interval '3 days' and ie.intime - interval '1 day' then
+    1
+  when ae.charttime between ie.intime - interval '5 days' and ie.intime - interval '3 day' then
+    -1
+  else 0 end as class_label 
+
 from adms adm
 inner join icu ie
   on ie.hadm_id = adm.hadm_id
@@ -85,9 +94,11 @@ inner join admne ae
 inner join patients pat 
   on pat.subject_id = adm.subject_id
 where
-ae.charttime <= ie.intime and
 adm.has_chartevents_data = 1 and
 adm.dischtime > adm.admittime and
 ie.intime > adm.admittime and
 adm.include_adm = true and
-round((cast(extract(epoch from adm.admittime - pat.dob)/(60*60*24*365.242) as numeric)), 2) >= 15.0; 
+round((cast(extract(epoch from adm.admittime - pat.dob)/(60*60*24*365.242) as numeric)), 2) >= 15.0
+and
+ae.charttime between adm.admittime and ie.intime; 
+include_icu = true;
