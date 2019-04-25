@@ -11,7 +11,7 @@ with inter as
   select adm.hadm_id, adm.admittime, adm.dischtime
   , ie.icustay_id, ie.intime
   , pat.subject_id, pat.dob
-  , ne.charttime, ne.category
+  , ne.charttime, ne.category, ne.description, ne.text
 
   , case
       when dense_rank() over (partition by ie.hadm_id order by ie.intime) = 1 then true
@@ -28,6 +28,9 @@ with inter as
 
   , round((cast(extract(epoch from adm.admittime - pat.dob)/(60*60*24*365.242) as numeric)), 2) as
   admission_age
+
+  , round((cast(extract(epoch from ie.intime - ne.charttime)/(60*60*24) as numeric)), 2) as
+  note_wait_time
 
   , case
     when ne.charttime between ie.intime - interval '1 day' and ie.intime then 0
@@ -73,8 +76,8 @@ with inter as
   ie.intime > adm.admittime
 )
 
-select hadm_id, subject_id, icustay_id, admittime, dob, charttime, category, admission_age
-, chartinterval, class_label
+select hadm_id, subject_id, icustay_id, admission_age, admittime, charttime, intime, note_wait_time
+, category, chartinterval, description, text , class_label
 
 from inter
 where
