@@ -62,12 +62,12 @@ with inter as
 
   -- create labels for charttimes
   , case
-    when ne.charttime between ie.intime - interval '1 day' and ie.intime then 'not used'
+    when ne.charttime between ie.intime - interval '1 day' and ie.intime then -1
     when ne.charttime between ie.intime - interval '3 days' and ie.intime - interval '1 day' then
-      'imminent'
+      1
     when ne.charttime between ie.intime - interval '5 days' and ie.intime - interval '3 day' then
-      'not used'
-    else 'not imminent' end as class_label 
+      -1
+    else 0 end as class_label 
 
   from admissions adm
   inner join icustays ie on adm.hadm_id = ie.hadm_id
