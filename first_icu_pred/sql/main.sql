@@ -11,7 +11,8 @@ with inter as
   select adm.hadm_id, adm.admittime, adm.dischtime
   , ie.icustay_id, ie.intime
   , pat.subject_id, pat.dob
-  , ne.charttime, ne.category, ne.description, ne.text
+  , ne.charttime
+  , ne.category, ne.description, ne.text
 
   , case
       when dense_rank() over (partition by ie.hadm_id order by ie.intime) = 1 then true
@@ -61,12 +62,12 @@ with inter as
 
   -- create labels for charttimes
   , case
-    when ne.charttime between ie.intime - interval '1 day' and ie.intime then -1
+    when ne.charttime between ie.intime - interval '1 day' and ie.intime then 'not used'
     when ne.charttime between ie.intime - interval '3 days' and ie.intime - interval '1 day' then
-      1
+      'imminent'
     when ne.charttime between ie.intime - interval '5 days' and ie.intime - interval '3 day' then
-      -1
-    else 0 end as class_label 
+      'not used'
+    else 'not imminent' end as class_label 
 
   from admissions adm
   inner join icustays ie on adm.hadm_id = ie.hadm_id
@@ -86,7 +87,9 @@ with inter as
 )
 
 select hadm_id, subject_id, icustay_id, admission_age, admittime, charttime, intime, wait_period
-, note_wait_time, category, chartinterval, description, text , class_label
+, note_wait_time, chartinterval
+,category, description, text
+, class_label
 
 from inter
 where
