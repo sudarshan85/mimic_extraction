@@ -12,6 +12,7 @@ with inter as
   , ie.icustay_id, ie.intime
   , pat.subject_id, pat.dob
   , ne.charttime
+  , ne.category, ne.description, ne.text
 
   , case
       when dense_rank() over (partition by ie.hadm_id order by ie.intime) = 1 then true
@@ -29,20 +30,43 @@ with inter as
   , round((cast(extract(epoch from adm.admittime - pat.dob)/(60*60*24*365.242) as numeric)), 2) as
   admission_age
 
+  -- time period between hospital admission and its 1st icu visit in days 
+  , round((cast(extract(epoch from ie.intime - adm.admittime)/(60*60*24) as numeric)), 2) as
+  wait_period
+
+  , round((cast(extract(epoch from ie.intime - ne.charttime)/(60*60*24) as numeric)), 2) as
+  note_wait_time
+
+  -- create labels for charttimes
+  , case
+    when ne.charttime between ie.intime - interval '1 day' and ie.intime then -1
+    when ne.charttime between ie.intime - interval '3 days' and ie.intime - interval '1 day' then
+      1
+    when ne.charttime between ie.intime - interval '5 days' and ie.intime - interval '3 day' then
+      -1
+    else 0 end as class_label 
+
   from admissions adm
   inner join icustays ie on adm.hadm_id = ie.hadm_id
   inner join noteevents ne on adm.hadm_id = ne.hadm_id
   inner join patients pat on pat.subject_id = adm.subject_id
-
-  where adm.has_chartevents_data = 1 and
+  where
+  -- subjects should have recorded chartevents data
+  adm.has_chartevents_data = 1 and
+  -- discard subjects who have discharge time earlier than admittime
   adm.dischtime > adm.admittime and
+  -- discard subjects who have ICU intime earlier than admittime
   ie.intime > adm.admittime and
+  -- only include notes which are chartted between admittime and ICU intime
   ne.charttime between adm.admittime and ie.intime and
-  ne.iserror is null
+  -- discard documented erroneous notes
+  ne.iserror is null 
 )
 
-select hadm_id, subject_id, icustay_id, admission_age, admittime, charttime, intime 
--- ,category, description, text
+select hadm_id, subject_id, icustay_id, admission_age, admittime, charttime, intime, wait_period
+, note_wait_time
+,category, description, text
+, class_label
 
 from inter
 where
