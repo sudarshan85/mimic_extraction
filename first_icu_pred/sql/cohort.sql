@@ -3,14 +3,14 @@
 -- MIMIC version: MIMIC-III v1.4
 -- ------------------------------------------------------------------
 
-drop materialized view if exists notes cascade;
-create materialized view notes as
+drop materialized view if exists co cascade;
+create materialized view co as
 
 with inter as
 (
   select adm.hadm_id, adm.admittime, adm.dischtime
   , ie.icustay_id, ie.intime
-  , pat.subject_id, pat.dob
+  , pat.subject_id, pat.dob, pat.gender
   , ne.charttime
   , ne.category, ne.description, ne.text
 
@@ -86,8 +86,8 @@ with inter as
   ne.iserror is null 
 )
 
-select hadm_id, subject_id, icustay_id, admission_age, admittime, charttime, intime, wait_period
-, note_wait_time, chartinterval
+select hadm_id, subject_id, icustay_id, admission_age, gender, admittime, charttime, intime
+, wait_period, note_wait_time, chartinterval
 , category, description, text
 , class_label
 
