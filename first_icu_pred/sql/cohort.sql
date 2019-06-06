@@ -80,10 +80,10 @@ with inter as
   adm.dischtime > adm.admittime and
   -- discard subjects who have ICU intime earlier than admittime
   ie.intime > adm.admittime and
-  -- only include notes which are chartted between admittime and ICU intime
-  ne.charttime between adm.admittime and ie.intime and
   -- discard documented erroneous notes
-  ne.iserror is null 
+  ne.iserror is null and
+  -- only include notes which are chartted between admittime and ICU intime
+  ne.charttime between adm.admittime and ie.intime
 )
 
 select subject_id, hadm_id, icustay_id, admission_type
