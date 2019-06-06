@@ -8,11 +8,10 @@ create materialized view co as
 
 with inter as
 (
-  select adm.hadm_id, adm.admittime, adm.dischtime
-  , ie.icustay_id, ie.intime
+  select adm.hadm_id, adm.admittime, adm.dischtime, adm.admission_type, adm.ethnicity
   , pat.subject_id, pat.dob, pat.gender
-  , ne.charttime
-  , ne.category, ne.description, ne.text
+  , ie.icustay_id, ie.intime
+  , ne.charttime, ne.category, ne.description, ne.text
 
   , case
       when dense_rank() over (partition by ie.hadm_id order by ie.intime) = 1 then true
@@ -32,10 +31,10 @@ with inter as
 
   -- time period between hospital admission and its 1st icu visit in days 
   , round((cast(extract(epoch from ie.intime - adm.admittime)/(60*60*24) as numeric)), 2) as
-  wait_period
+  adm_icu_period
 
   , round((cast(extract(epoch from ie.intime - ne.charttime)/(60*60*24) as numeric)), 2) as
-  note_wait_time
+  chart_icu_period
 
   , case
     when ne.charttime between ie.intime - interval '1 day' and ie.intime then 0
@@ -69,6 +68,7 @@ with inter as
       -1
     else 0 end as class_label 
 
+
   from admissions adm
   inner join icustays ie on adm.hadm_id = ie.hadm_id
   inner join noteevents ne on adm.hadm_id = ne.hadm_id
@@ -86,8 +86,10 @@ with inter as
   ne.iserror is null 
 )
 
-select hadm_id, subject_id, icustay_id, admission_age, gender, admittime, charttime, intime
-, wait_period, note_wait_time, chartinterval
+select subject_id, hadm_id, icustay_id, admission_type
+, admittime, dischtime, intime, charttime
+, adm_icu_period, chart_icu_period, chartinterval
+, ethnicity, dob, gender, admission_age
 , category, description, text
 , class_label
 
