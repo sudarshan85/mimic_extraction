@@ -8,9 +8,10 @@ create materialized view co as
 
 with inter as
 (
-  select adm.hadm_id, adm.admittime, adm.dischtime, adm.admission_type, adm.ethnicity
+  select adm.hadm_id, adm.admittime, adm.dischtime 
+  , adm.admission_type, adm.ethnicity, adm.deathtime
+  , ie.icustay_id, ie.intime, ie.outtime, ie.los
   , pat.subject_id, pat.dob, pat.gender
-  , ie.icustay_id, ie.intime
   , ne.charttime, ne.category, ne.description, ne.text
 
   , case
@@ -35,6 +36,10 @@ with inter as
 
   , round((cast(extract(epoch from ie.intime - ne.charttime)/(60*60*24) as numeric)), 2) as
   chart_icu_period
+
+  , case
+    when los >= 5.0 or adm.deathtime between intime and intime + interval '5 days' then 1
+    else 0 end as discharge_label
 
   , case
     when ne.charttime between ie.intime - interval '1 day' and ie.intime then 0
@@ -66,8 +71,7 @@ with inter as
       1
     when ne.charttime between ie.intime - interval '5 days' and ie.intime - interval '3 day' then
       -1
-    else 0 end as class_label 
-
+    else 0 end as imminent_label
 
   from admissions adm
   inner join icustays ie on adm.hadm_id = ie.hadm_id
@@ -87,11 +91,11 @@ with inter as
 )
 
 select subject_id, hadm_id, icustay_id, admission_type
-, admittime, dischtime, intime, charttime
+, admittime, dischtime, intime, outtime, charttime, los as icu_los, deathtime
 , adm_icu_period, chart_icu_period, chartinterval
 , ethnicity, dob, gender, admission_age
 , category, description, text
-, class_label
+, imminent_label, discharge_label
 
 from inter
 where
@@ -102,3 +106,4 @@ include_icu = true and
 -- only include adult subjects
 admission_age >= 15.0
 order by hadm_id, icustay_id;
+
