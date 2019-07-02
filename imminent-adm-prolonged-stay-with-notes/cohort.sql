@@ -1,5 +1,4 @@
 -- ------------------------------------------------------------------
--- Description: Gather clinical notes for predicting first ICU visit
 -- MIMIC version: MIMIC-III v1.4
 -- ------------------------------------------------------------------
 
@@ -32,14 +31,14 @@ with inter as
 
   -- time period between hospital admission and its 1st icu visit in days 
   , round((cast(extract(epoch from ie.intime - adm.admittime)/(60*60*24) as numeric)), 2) as
-  adm_icu_period
+  adm_to_icu_period
 
   , round((cast(extract(epoch from ie.intime - ne.charttime)/(60*60*24) as numeric)), 2) as
-  chart_icu_period
+  charttime_to_icu_period
 
   , case
-    when los >= 5.0 or adm.deathtime between intime and intime + interval '5 days' then 1
-    else 0 end as discharge_label
+    when ie.los >= 5.0 or adm.deathtime between ie.intime and ie.intime + interval '5 days' then 1
+    else 0 end as prolonged_stay_label
 
   , case
     when ne.charttime between ie.intime - interval '1 day' and ie.intime then 0
@@ -71,7 +70,7 @@ with inter as
       1
     when ne.charttime between ie.intime - interval '5 days' and ie.intime - interval '3 day' then
       -1
-    else 0 end as imminent_label
+    else 0 end as imminent_adm_label
 
   from admissions adm
   inner join icustays ie on adm.hadm_id = ie.hadm_id
@@ -92,10 +91,10 @@ with inter as
 
 select subject_id, hadm_id, icustay_id, admission_type
 , admittime, dischtime, intime, outtime, charttime, los as icu_los, deathtime
-, adm_icu_period, chart_icu_period, chartinterval
+, adm_to_icu_period, charttime_to_icu_period, chartinterval
 , ethnicity, dob, gender, admission_age
 , category, description, text
-, imminent_label, discharge_label
+, imminent_adm_label, prolonged_stay_label
 
 from inter
 where
