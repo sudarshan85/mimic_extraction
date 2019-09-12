@@ -7,11 +7,23 @@ create materialized view co as
 
 with inter as
 (
-  select adm.hadm_id, adm.admittime, adm.dischtime 
-  , adm.admission_type, adm.ethnicity, adm.deathtime
-  , ie.icustay_id, ie.intime, ie.outtime, ie.los
-  , pat.subject_id, pat.dob, pat.gender
-  , ne.charttime, ne.category, ne.description, ne.text
+  select adm.hadm_id
+  , adm.admittime
+  , adm.dischtime 
+  , adm.admission_type
+  , adm.ethnicity
+  , adm.deathtime
+  , ie.icustay_id
+  , ie.intime
+  , ie.outtime
+  , ie.los
+  , pat.subject_id
+  , pat.dob
+  , pat.gender
+  , ne.charttime
+  , ne.category
+  , ne.description
+  , ne.text
 
   , case
       when dense_rank() over (partition by ie.hadm_id order by ie.intime) = 1 then true
@@ -68,8 +80,8 @@ with inter as
     when ne.charttime between ie.intime - interval '1 day' and ie.intime then -1
     when ne.charttime between ie.intime - interval '3 days' and ie.intime - interval '1 day' then
       1
-    when ne.charttime between ie.intime - interval '5 days' and ie.intime - interval '3 day' then
-      -1
+    -- when ne.charttime between ie.intime - interval '5 days' and ie.intime - interval '3 day' then
+      -- -1
     else 0 end as imminent_adm_label
 
   from admissions adm
@@ -77,32 +89,49 @@ with inter as
   inner join noteevents ne on adm.hadm_id = ne.hadm_id
   inner join patients pat on pat.subject_id = adm.subject_id
   where
-  -- subjects should have recorded chartevents data
+  -- -- subjects should have recorded chartevents data
   adm.has_chartevents_data = 1 and
-  -- discard subjects who have discharge time earlier than admittime
+  -- -- discard subjects who have discharge time earlier than admittime
   adm.dischtime > adm.admittime and
-  -- discard subjects who have ICU intime earlier than admittime
+  -- -- discard subjects who have ICU intime earlier than admittime
   ie.intime > adm.admittime and
-  -- discard documented erroneous notes
+  -- -- discard documented erroneous notes
   ne.iserror is null and
-  -- only include notes which are chartted between admittime and ICU intime
+  -- -- only include notes which are chartted between admittime and ICU intime
   ne.charttime between adm.admittime and ie.intime
 )
 
-select subject_id, hadm_id, icustay_id, admission_type
-, admittime, dischtime, intime, outtime, charttime, los as icu_los, deathtime
-, adm_to_icu_period, charttime_to_icu_period, chartinterval
-, ethnicity, dob, gender, admission_age
-, category, description, text
-, imminent_adm_label, prolonged_stay_label
+select hadm_id
+, subject_id
+, icustay_id
+, admission_type
+, admittime
+, dischtime
+, intime
+, outtime
+, charttime
+, los as icu_los
+, deathtime
+, adm_to_icu_period
+, charttime_to_icu_period
+, chartinterval
+, ethnicity
+, dob
+, gender
+, admission_age
+, category
+, description
+, text
+, imminent_adm_label
+, prolonged_stay_label
 
 from inter
 where
--- only include subjects with one admission or previous admission more than 30 days ago
+-- -- only include subjects with one admission or previous admission more than 30 days ago
 include_adm = true and
--- only include subjects' first ICU visit for that admission
+-- -- only include subjects' first ICU visit for that admission
 include_icu = true and
--- only include adult subjects
+-- -- only include adult subjects
 admission_age >= 15.0
 order by hadm_id, icustay_id;
 
