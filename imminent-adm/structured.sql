@@ -102,8 +102,6 @@ with inter as
   225664,--	Glucose finger stick
   220621,--	Glucose (serum)
   226537,--	Glucose (whole blood)
-  50809,
-  50931,
 
   -- TEMPERATURE
   223762, -- "Temperature Celsius"
