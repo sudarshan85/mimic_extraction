@@ -14,6 +14,8 @@ with inter as
   , ie.icustay_id
   , ce.charttime
   , ie.intime
+  , pat.dob
+  , pat.gender
 
   , case
       when dense_rank() over (partition by ie.hadm_id order by ie.intime) = 1 then true
@@ -28,23 +30,42 @@ with inter as
         adm.subject_id order by adm.admittime))/(60*60*24) as numeric)), 2) >= 30.0 then true
       else false end as include_adm
 
-  , case
-    when itemid in (211,220045) and valuenum > 0 and valuenum < 300 then 1 -- HeartRate
-    when itemid in (51,442,455,6701,220179,220050) and valuenum > 0 and valuenum < 400 then 2 -- SysBP
-    when itemid in (8368,8440,8441,8555,220180,220051) and valuenum > 0 and valuenum < 300 then 3 -- DiasBP
-    when itemid in (456,52,6702,443,220052,220181,225312) and valuenum > 0 and valuenum < 300 then 4 -- MeanBP
-    when itemid in (615,618,220210,224690) and valuenum > 0 and valuenum < 70 then 5 -- RespRate
-    when itemid in (223761,678) and valuenum > 70 and valuenum < 120  then 6 -- TempF, converted to degC in valuenum call
-    when itemid in (223762,676) and valuenum > 10 and valuenum < 50  then 6 -- TempC
-    when itemid in (646,220277) and valuenum > 0 and valuenum <= 100 then 7 -- SpO2
-    when itemid in (807,811,1529,3745,3744,225664,220621,226537) and valuenum > 0 then 8 -- Glucose
+  , round((cast(extract(epoch from adm.admittime - pat.dob)/(60*60*24*365.242) as numeric)), 2) as
+  admission_age
 
-    else null end as VitalID
-      -- convert F to C
+  , case
+    -- hr
+    when itemid in (211,220045) and valuenum > 0 and valuenum < 300 then 1 
+    -- sbp, dbp, map
+    when itemid in (51,442,455,6701,220179,220050) and valuenum > 0 and valuenum < 400 then 2
+    when itemid in (8368,8440,8441,8555,220180,220051) and valuenum > 0 and valuenum < 300 then 3 
+    when itemid in (456,52,6702,443,220052,220181,225312) and valuenum > 0 and valuenum < 300 then 4
+    -- resp
+    when itemid in (615,618,220210,224690) and valuenum > 0 and valuenum < 70 then 5
+    -- temp
+    when itemid in (223761,678) and valuenum > 70 and valuenum < 120  then 6 -- F converted to C in valuenum call
+    when itemid in (223762,676) and valuenum > 10 and valuenum < 50  then 6 
+    -- spo2
+    when itemid in (646,220277) and valuenum > 0 and valuenum <= 100 then 7
+    -- glucose
+    when itemid in (807,811,1529,3745,3744,225664,220621,226537) and valuenum > 0 then 8
+    -- base_excess
+    when itemid in (74,776,3740,4196,224828) and valuenum >= -20 and valuenum <= 20 then 9
+    -- hco3
+    when itemid in (227443) and valuenum <= 50 then 10
+    -- fio2
+    when itemid in (189,190) then 11 -- fraction
+    when itemid in (185,186,3420,3421,3422,8517,223835) then 11 -- %
+    else null end as var_id
+
+  -- convert F to C
   , case when itemid in (223761,678) then (valuenum-32)/1.8 else valuenum end as valuenum
+  -- convert % to fraction
+  -- , case when itemid in (189,190) then (valuenum/100) else valuenum end as valuenum_fio2
 
   from admissions adm
   inner join icustays ie on adm.hadm_id = ie.hadm_id
+  inner join patients pat on pat.subject_id = adm.subject_id
   left join chartevents ce
   on ie.subject_id = ce.subject_id and ie.hadm_id = ce.hadm_id and ie.icustay_id = ce.icustay_id
   and ce.charttime between adm.admittime and ie.intime
@@ -107,21 +128,55 @@ with inter as
   223762, -- "Temperature Celsius"
   676,	-- "Temperature C"
   223761, -- "Temperature Fahrenheit"
-  678 --	"Temperature F"
+  678, --	"Temperature F"
+
+  -- Base Excess
+  74, -- Base Excess
+  776, -- Arterial Base Excess
+  3740, -- Base Excess (other)
+  3829, -- Venous Base Excess
+  4196, -- Base Excess (cap)
+  224828, -- Arterial Base Excess
+
+  -- HCO3
+  227443,
+
+  -- FiO2
+  185, -- FiO2 Alarm-High
+  186, -- FiO2 Alarm-Low
+  189, -- FiO2 (Analyzed)
+  190, -- FiO2 Set
+  3420, -- FiO2
+  3421, -- FiO2 Alarm [Low]
+  3422, -- FiO2 [Meas]
+  8517, -- FiO2 Alarm [High]
+  223835 -- Inspired O2 Fraction
 )
 )
 
-SELECT subject_id, hadm_id, icustay_id, admittime, intime, charttime
+SELECT subject_id, hadm_id, icustay_id, dob, gender, admittime, intime, charttime
 
 -- Easier names
-, case when VitalID = 1 then valuenum else null end as hr
-, case when VitalID = 2 then valuenum else null end as sbp
-, case when VitalID = 3 then valuenum else null end as dbp 
-, case when VitalID = 4 then valuenum else null end as map
-, case when VitalID = 5 then valuenum else null end as resp
-, case when VitalID = 6 then valuenum else null end as temp
-, case when VitalID = 7 then valuenum else null end as spo2
-, case when VitalID = 8 then valuenum else null end as glucose
+, case when var_id = 1 then valuenum else null end as hr
+, case when var_id = 2 then valuenum else null end as sbp
+, case when var_id = 3 then valuenum else null end as dbp 
+, case when var_id = 4 then valuenum else null end as map
+, case when var_id = 5 then valuenum else null end as resp
+, case when var_id = 6 then valuenum else null end as temp
+, case when var_id = 7 then valuenum else null end as spo2
+, case when var_id = 8 then valuenum else null end as glucose
+, case when var_id = 9 then valuenum else null end as base_excess
+, case when var_id = 10 then valuenum else null end as hco3
+
+-- , case when var_id = 11 and valuenum <= 1 then valuenum
+  -- when var_id = 11 and valuenum > 1 then valuenum/100 else null end as fio2
+
+-- convert fio2 % to fraction
+, case
+  when var_id = 11 and valuenum > 100 then 1
+  when var_id = 11 and valuenum <= 1 then valuenum
+  when var_id = 11 and valuenum > 1 then valuenum/100
+  else null end as fio2
 
 from inter
 where include_adm = true
