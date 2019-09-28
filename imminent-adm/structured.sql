@@ -65,6 +65,12 @@ with inter as
     when itemid in (770,220587) then 15
     -- BUN
     when itemid in (781,1162,3737,225624) and valuenum <= 270 then 16
+    -- Alkaline phosphate
+    when itemid in (773,3728,22561) and valuenum <= 1000 then 17
+    -- calcium
+    when itemid in (786,816,1522,3746,225625,225667) then 18
+    -- chloride
+    when itemid in (788,1523,3747,220602,226536) then 19
     else null end as var_id
 
   , valuenum
@@ -190,6 +196,25 @@ with inter as
   , 3737
   , 225624
 
+  -- Alkaline phosphate
+  , 773 -- Alk. Phosphate
+  , 3728 -- Alkaline Phosphatase
+  , 22561 -- Alkaline phosphate
+
+  -- calcium
+  , 786 -- Calcium (8.4-10.2)
+  , 816 -- Inonized Calcium
+  , 1522 -- Calcium
+  , 3746 -- Calcium (8.8-10.8)
+  , 225625 -- Calcium non-ionized
+  , 225667 -- Ionized Calcium
+
+  -- chloride
+  , 788 -- Chloride (100-112)
+  , 1523 -- Chloride
+  , 3747 -- Chloride (100-112)
+  , 220602 -- Chloride (serum)
+  , 226536 -- Chloride (whole blood)
 )
 )
 
@@ -234,6 +259,9 @@ SELECT subject_id, hadm_id, icustay_id, dob, gender, admission_age, admittime, i
 
 , case when var_id = 15 then valuenum else null end as ast
 , case when var_id = 16 then valuenum else null end as bun
+, case when var_id = 17 then valuenum else null end as alp
+, case when var_id = 18 then valuenum else null end as calcium
+, case when var_id = 19 then valuenum else null end as chloride
 
   -- time period between hospital admission and its 1st icu visit in days 
   , round((cast(extract(epoch from intime - admittime)/(60*60*24) as numeric)), 2) as
