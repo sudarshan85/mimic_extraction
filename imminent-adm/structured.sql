@@ -54,14 +54,10 @@ with inter as
     -- hco3
     when itemid in (227443) and valuenum <= 50 then 10
     -- fio2
-    when itemid in (189,190) then 11 -- fraction
-    when itemid in (185,186,3420,3421,3422,8517,223835) then 11 -- %
+    when itemid in (185,186,189,190,3420,3421,3422,8517,223835) then 11 
     else null end as var_id
 
-  -- convert F to C
-  , case when itemid in (223761,678) then (valuenum-32)/1.8 else valuenum end as valuenum
-  -- convert % to fraction
-  -- , case when itemid in (189,190) then (valuenum/100) else valuenum end as valuenum_fio2
+  , valuenum
 
   from admissions adm
   inner join icustays ie on adm.hadm_id = ie.hadm_id
@@ -162,14 +158,17 @@ SELECT subject_id, hadm_id, icustay_id, dob, gender, admittime, intime, charttim
 , case when var_id = 3 then valuenum else null end as dbp 
 , case when var_id = 4 then valuenum else null end as map
 , case when var_id = 5 then valuenum else null end as resp
-, case when var_id = 6 then valuenum else null end as temp
+
+-- convert F to C
+, case
+  when var_id = 6 and valuenum < 50 then valuenum
+  when var_id = 6 and valuenum > 70 then (valuenum-32)/1.8
+  else null end as temp
+
 , case when var_id = 7 then valuenum else null end as spo2
 , case when var_id = 8 then valuenum else null end as glucose
 , case when var_id = 9 then valuenum else null end as base_excess
 , case when var_id = 10 then valuenum else null end as hco3
-
--- , case when var_id = 11 and valuenum <= 1 then valuenum
-  -- when var_id = 11 and valuenum > 1 then valuenum/100 else null end as fio2
 
 -- convert fio2 % to fraction
 , case
