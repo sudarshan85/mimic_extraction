@@ -53,10 +53,12 @@ with inter as
     when itemid in (74,776,3740,4196,224828) and valuenum >= -20 and valuenum <= 20 then 9
     -- hco3
     when itemid in (227443) and valuenum <= 50 then 10
-    -- fio2
+    -- fio2 in both % and fraction
     when itemid in (185,186,189,190,3420,3421,3422,8517,223835) then 11 
     -- ph
     when itemid in (780,860,1126,1673,1880,3839,4202,4753,8387,220274,220734,223830) and valuenum >= 0 and valuenum < 20 then 12
+    -- paco2 in %
+    when itemid in (778) then 13
     else null end as var_id
 
   , valuenum
@@ -136,7 +138,7 @@ with inter as
   4196, -- Base Excess (cap)
   224828, -- Arterial Base Excess
 
-  -- HCO3
+  -- HCO3 (serum)
   227443,
 
   -- FiO2
@@ -162,7 +164,10 @@ with inter as
   8387, -- GI [pH]
   220274, -- PH (Venous)
   220734, -- PH (dipstick)
-  223830 -- PH (Arterial)
+  223830, -- PH (Arterial)
+
+  -- Arterial PaCO2
+  778
 )
 )
 
@@ -194,6 +199,11 @@ SELECT subject_id, hadm_id, icustay_id, dob, gender, admittime, intime, charttim
   else null end as fio2
 
 , case when var_id = 12 then valuenum else null end as ph
+
+-- convert paco2 % to fraction
+, case
+  when var_id = 13 then valuenum/100
+  else null end as paco2 
 
 from inter
 where include_adm = true
