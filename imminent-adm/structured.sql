@@ -36,30 +36,33 @@ with inter as
   , case
     -- hr
     when itemid in (211,220045) and valuenum > 0 and valuenum < 300 then 1 
-    -- sbp, dbp, map
+    sbp, dbp, map
     when itemid in (51,442,455,6701,220179,220050) and valuenum > 0 and valuenum < 400 then 2
     when itemid in (8368,8440,8441,8555,220180,220051) and valuenum > 0 and valuenum < 300 then 3 
     when itemid in (456,52,6702,443,220052,220181,225312) and valuenum > 0 and valuenum < 300 then 4
-    -- resp
+    resp
     when itemid in (615,618,220210,224690) and valuenum > 0 and valuenum < 70 then 5
-    -- temp
-    when itemid in (223761,678) and valuenum > 70 and valuenum < 120  then 6 -- F converted to C in valuenum call
+    temp
+    when itemid in (223761,678) and valuenum > 70 and valuenum < 120  then 6 F converted to C in valuenum call
     when itemid in (223762,676) and valuenum > 10 and valuenum < 50  then 6 
-    -- spo2
+    spo2
     when itemid in (646,220277) and valuenum > 0 and valuenum <= 100 then 7
-    -- glucose
+    glucose
     when itemid in (807,811,1529,3745,3744,225664,220621,226537) and valuenum > 0 then 8
-    -- base_excess
+    base_excess
     when itemid in (74,776,3740,4196,224828) and valuenum >= -20 and valuenum <= 20 then 9
-    -- hco3
+    hco3
     when itemid in (227443) and valuenum <= 50 then 10
-    -- fio2 in both % and fraction
+    fio2 in both % and fraction
     when itemid in (185,186,189,190,3420,3421,3422,8517,223835) then 11 
-    -- ph
+    ph
     when itemid in (780,860,1126,1673,1880,3839,4202,4753,8387,220274,220734,223830) and valuenum >= 0 and valuenum < 20 then 12
-    -- paco2 in %
+    paco2 in %
     when itemid in (778) then 13
+    sa02 in %
+    when itemid in (834,3495,3609,8532) and valuenum >= 0 and valuenum <= 100 then 14
     else null end as var_id
+      
 
   , valuenum
 
@@ -167,7 +170,13 @@ with inter as
   223830, -- PH (Arterial)
 
   -- Arterial PaCO2
-  778
+  778,
+
+  -- SaO2
+  834, -- SaO2
+  3495, -- Lowest SaO2
+  3609, -- SaO2 Alarm [Low]
+  8532 -- SaO2 Alarm [High]
 )
 )
 
@@ -204,6 +213,11 @@ SELECT subject_id, hadm_id, icustay_id, dob, gender, admittime, intime, charttim
 , case
   when var_id = 13 then valuenum/100
   else null end as paco2 
+
+-- convert sao2 % to fraction
+, case
+  when var_id = 14 then valuenum/100
+  else null end as sao2
 
 from inter
 where include_adm = true
