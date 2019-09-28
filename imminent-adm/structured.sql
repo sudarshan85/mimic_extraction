@@ -55,6 +55,8 @@ with inter as
     when itemid in (227443) and valuenum <= 50 then 10
     -- fio2
     when itemid in (185,186,189,190,3420,3421,3422,8517,223835) then 11 
+    -- ph
+    when itemid in (780,860,1126,1673,1880,3839,4202,4753,8387,220274,220734,223830) and valuenum >= 0 and valuenum < 20 then 12
     else null end as var_id
 
   , valuenum
@@ -146,7 +148,21 @@ with inter as
   3421, -- FiO2 Alarm [Low]
   3422, -- FiO2 [Meas]
   8517, -- FiO2 Alarm [High]
-  223835 -- Inspired O2 Fraction
+  223835, -- Inspired O2 Fraction
+
+  -- ph
+  780, -- Arterial pH
+  860, -- Venous pH
+  1126, -- Art.pH
+  1673, -- PH
+  1880, -- Urine pH
+  3839, -- ph (other)
+  4202, -- ph (cap)
+  4753, -- ph (Art)
+  8387, -- GI [pH]
+  220274, -- PH (Venous)
+  220734, -- PH (dipstick)
+  223830 -- PH (Arterial)
 )
 )
 
@@ -176,6 +192,8 @@ SELECT subject_id, hadm_id, icustay_id, dob, gender, admittime, intime, charttim
   when var_id = 11 and valuenum <= 1 then valuenum
   when var_id = 11 and valuenum > 1 then valuenum/100
   else null end as fio2
+
+, case when var_id = 12 then valuenum else null end as ph
 
 from inter
 where include_adm = true
