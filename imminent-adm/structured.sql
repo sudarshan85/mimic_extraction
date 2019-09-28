@@ -36,33 +36,36 @@ with inter as
   , case
     -- hr
     when itemid in (211,220045) and valuenum > 0 and valuenum < 300 then 1 
-    sbp, dbp, map
+    -- sbp, dbp, map
     when itemid in (51,442,455,6701,220179,220050) and valuenum > 0 and valuenum < 400 then 2
     when itemid in (8368,8440,8441,8555,220180,220051) and valuenum > 0 and valuenum < 300 then 3 
     when itemid in (456,52,6702,443,220052,220181,225312) and valuenum > 0 and valuenum < 300 then 4
-    resp
+    -- resp
     when itemid in (615,618,220210,224690) and valuenum > 0 and valuenum < 70 then 5
-    temp
-    when itemid in (223761,678) and valuenum > 70 and valuenum < 120  then 6 F converted to C in valuenum call
+    -- temp
+    when itemid in (223761,678) and valuenum > 70 and valuenum < 120  then 6 -- F converted to C later
     when itemid in (223762,676) and valuenum > 10 and valuenum < 50  then 6 
-    spo2
+    -- spo2
     when itemid in (646,220277) and valuenum > 0 and valuenum <= 100 then 7
-    glucose
+    -- glucose
     when itemid in (807,811,1529,3745,3744,225664,220621,226537) and valuenum > 0 then 8
-    base_excess
+    -- base_excess
     when itemid in (74,776,3740,4196,224828) and valuenum >= -20 and valuenum <= 20 then 9
-    hco3
+    -- hco3
     when itemid in (227443) and valuenum <= 50 then 10
-    fio2 in both % and fraction
+    -- fio2 in both % and fraction
     when itemid in (185,186,189,190,3420,3421,3422,8517,223835) then 11 
-    ph
+    -- ph
     when itemid in (780,860,1126,1673,1880,3839,4202,4753,8387,220274,220734,223830) and valuenum >= 0 and valuenum < 20 then 12
-    paco2 in %
+    -- paco2 in %
     when itemid in (778) then 13
-    sa02 in %
+    -- sa02 in %
     when itemid in (834,3495,3609,8532) and valuenum >= 0 and valuenum <= 100 then 14
+    -- AST 
+    when itemid in (770,220587) then 15
+    -- BUN
+    when itemid in (781,1162,3737,225624) and valuenum <= 270 then 16
     else null end as var_id
-      
 
   , valuenum
 
@@ -78,109 +81,119 @@ with inter as
   where ce.itemid in
   (
   -- HEART RATE
-  211, --"Heart Rate"
-  220045, --"Heart Rate"
+  211 --"Heart Rate"
+  , 220045 --"Heart Rate"
 
   -- Systolic/diastolic
+  , 51 --	Arterial BP [Systolic]
+  , 442 --	Manual BP [Systolic]
+  , 455 --	NBP [Systolic]
+  , 6701 --	Arterial BP #2 [Systolic]
+  , 220179 --	Non Invasive Blood Pressure systolic
+  , 220050 --	Arterial Blood Pressure systolic
 
-  51, --	Arterial BP [Systolic]
-  442, --	Manual BP [Systolic]
-  455, --	NBP [Systolic]
-  6701, --	Arterial BP #2 [Systolic]
-  220179, --	Non Invasive Blood Pressure systolic
-  220050, --	Arterial Blood Pressure systolic
-
-  8368, --	Arterial BP [Diastolic]
-  8440, --	Manual BP [Diastolic]
-  8441, --	NBP [Diastolic]
-  8555, --	Arterial BP #2 [Diastolic]
-  220180, --	Non Invasive Blood Pressure diastolic
-  220051, --	Arterial Blood Pressure diastolic
+  , 8368 --	Arterial BP [Diastolic]
+  , 8440 --	Manual BP [Diastolic]
+  , 8441 --	NBP [Diastolic]
+  , 8555 --	Arterial BP #2 [Diastolic]
+  , 220180 --	Non Invasive Blood Pressure diastolic
+  , 220051 --	Arterial Blood Pressure diastolic
 
 
   -- MEAN ARTERIAL PRESSURE
-  456, --"NBP Mean"
-  52, --"Arterial BP Mean"
-  6702, --	Arterial BP Mean #2
-  443, --	Manual BP Mean(calc)
-  220052, --"Arterial Blood Pressure mean"
-  220181, --"Non Invasive Blood Pressure mean"
-  225312, --"ART BP mean"
+  , 52 --"Arterial BP Mean"
+  , 443 --	Manual BP Mean(calc)
+  , 456 --"NBP Mean"
+  , 6702 --	Arterial BP Mean #2
+  , 220052 --"Arterial Blood Pressure mean"
+  , 220181 --"Non Invasive Blood Pressure mean"
+  , 225312 --"ART BP mean"
 
   -- RESPIRATORY RATE
-  618,--	Respiratory Rate
-  615,--	Resp Rate (Total)
-  220210,--	Respiratory Rate
-  224690, --	Respiratory Rate (Total)
-
-
-  -- SPO2, peripheral
-  646, 220277,
-
-  -- GLUCOSE, both lab and fingerstick
-  807,--	Fingerstick Glucose
-  811,--	Glucose (70-105)
-  1529,--	Glucose
-  3745,--	BloodGlucose
-  3744,--	Blood Glucose
-  225664,--	Glucose finger stick
-  220621,--	Glucose (serum)
-  226537,--	Glucose (whole blood)
+  , 615 --	Resp Rate (Total)
+  , 618 --	Respiratory Rate
+  , 220210 --	Respiratory Rate
+  , 224690 --	Respiratory Rate (Total)
 
   -- TEMPERATURE
-  223762, -- "Temperature Celsius"
-  676,	-- "Temperature C"
-  223761, -- "Temperature Fahrenheit"
-  678, --	"Temperature F"
+  , 676	-- "Temperature C"
+  , 678 --	"Temperature F"
+  , 223761 -- "Temperature Fahrenheit"
+  , 223762 -- "Temperature Celsius"
+
+  -- SPO2
+  , 646 -- SpO2
+  , 220277 -- O2 saturation pulseoxymetry
+
+  -- GLUCOSE, both lab and fingerstick
+  , 152 --	Glucose
+  , 807 --	Fingerstick Glucose
+  , 811--	Glucose (70-105)
+  , 3744 --	Blood Glucose
+  , 3745 --	BloodGlucose
+  , 220621 --	Glucose (serum)
+  , 226537 --	Glucose (whole blood)
+  , 225664 --	Glucose finger stick
 
   -- Base Excess
-  74, -- Base Excess
-  776, -- Arterial Base Excess
-  3740, -- Base Excess (other)
-  3829, -- Venous Base Excess
-  4196, -- Base Excess (cap)
-  224828, -- Arterial Base Excess
+  , 74 -- Base Excess
+  , 776 -- Arterial Base Excess
+  , 3740 -- Base Excess (other)
+  , 3829 -- Venous Base Excess
+  , 4196 -- Base Excess (cap)
+  , 224828 -- Arterial Base Excess
 
-  -- HCO3 (serum)
-  227443,
+  -- hco3 
+  , 227443 -- HCO3 (serum)
 
   -- FiO2
-  185, -- FiO2 Alarm-High
-  186, -- FiO2 Alarm-Low
-  189, -- FiO2 (Analyzed)
-  190, -- FiO2 Set
-  3420, -- FiO2
-  3421, -- FiO2 Alarm [Low]
-  3422, -- FiO2 [Meas]
-  8517, -- FiO2 Alarm [High]
-  223835, -- Inspired O2 Fraction
+  , 185 -- FiO2 Alarm-High
+  , 186 -- FiO2 Alarm-Low
+  , 189 -- FiO2 (Analyzed)
+  , 190 -- FiO2 Set
+  , 3420 -- FiO2
+  , 3421 -- FiO2 Alarm [Low]
+  , 3422 -- FiO2 [Meas]
+  , 8517 -- FiO2 Alarm [High]
+  , 223835 -- Inspired O2 Fraction
 
   -- ph
-  780, -- Arterial pH
-  860, -- Venous pH
-  1126, -- Art.pH
-  1673, -- PH
-  1880, -- Urine pH
-  3839, -- ph (other)
-  4202, -- ph (cap)
-  4753, -- ph (Art)
-  8387, -- GI [pH]
-  220274, -- PH (Venous)
-  220734, -- PH (dipstick)
-  223830, -- PH (Arterial)
+  , 780 -- Arterial pH
+  , 860 -- Venous pH
+  , 1126 -- Art.pH
+  , 1673 -- PH
+  , 1880 -- Urine pH
+  , 3839 -- ph (other)
+  , 4202 -- ph (cap)
+  , 4753 -- ph (Art)
+  , 8387 -- GI [pH]
+  , 220274 -- PH (Venous)
+  , 220734 -- PH (dipstick)
+  , 223830 -- PH (Arterial)
 
   -- Arterial PaCO2
-  778,
+  , 778
 
   -- SaO2
-  834, -- SaO2
-  3495, -- Lowest SaO2
-  3609, -- SaO2 Alarm [Low]
-  8532 -- SaO2 Alarm [High]
+  , 834 -- SaO2
+  , 3495 -- Lowest SaO2
+  , 3609 -- SaO2 Alarm [Low]
+  , 8532 -- SaO2 Alarm [High]
+
+  -- AST
+  , 770 -- carevue
+  , 220587 -- metavision
+
+  -- BUN
+  , 781
+  , 1162
+  , 3737
+  , 225624
+
 )
 )
 
-SELECT subject_id, hadm_id, icustay_id, dob, gender, admittime, intime, charttime
+SELECT subject_id, hadm_id, icustay_id, dob, gender, admission_age, admittime, intime, charttime
 
 -- Easier names
 , case when var_id = 1 then valuenum else null end as hr
@@ -219,7 +232,18 @@ SELECT subject_id, hadm_id, icustay_id, dob, gender, admittime, intime, charttim
   when var_id = 14 then valuenum/100
   else null end as sao2
 
+, case when var_id = 15 then valuenum else null end as ast
+, case when var_id = 16 then valuenum else null end as bun
+
+  -- time period between hospital admission and its 1st icu visit in days 
+  , round((cast(extract(epoch from intime - admittime)/(60*60*24) as numeric)), 2) as
+  adm_to_icu_period
+
+  , round((cast(extract(epoch from intime - charttime)/(60*60*24) as numeric)), 2) as
+  charttime_to_icu_period
+
 from inter
 where include_adm = true
 and include_icu = true
+and admission_age >= 15.0
 order by hadm_id, icustay_id;
