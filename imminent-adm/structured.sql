@@ -35,11 +35,11 @@ with inter as
 
   , case
     -- hr
-    when itemid in (211,220045) and valuenum > 0 and valuenum < 300 then 1 
+    when itemid in (211,220045) and valuenum > 0 and valuenum < 300 then 1
     -- sbp, dbp, map
     when itemid in (51,442,455,6701,220179,220050) and valuenum > 0 and valuenum < 400 then 2
     when itemid in (8368,8440,8441,8555,220180,220051) and valuenum > 0 and valuenum < 300 then 3 
-    when itemid in (456,52,6702,443,220052,220181,225312) and valuenum > 0 and valuenum < 300 then 4
+    when itemid in (456,52,6702,443,220052,220181,225312) and valuenum > 0 and valuenum < 300 then 5
     -- resp
     when itemid in (615,618,220210,224690) and valuenum > 0 and valuenum < 70 then 5
     -- temp
@@ -50,27 +50,53 @@ with inter as
     -- glucose
     when itemid in (807,811,1529,3745,3744,225664,220621,226537) and valuenum > 0 then 8
     -- base_excess
-    when itemid in (74,776,3740,4196,224828) and valuenum >= -20 and valuenum <= 20 then 9
+    when itemid in (74,776,3740,4196,224828) then 9
     -- hco3
-    when itemid in (227443) and valuenum <= 50 then 10
+    when itemid in (227443) then 10
     -- fio2 in both % and fraction
     when itemid in (185,186,189,190,3420,3421,3422,8517,223835) then 11 
     -- ph
-    when itemid in (780,860,1126,1673,1880,3839,4202,4753,8387,220274,220734,223830) and valuenum >= 0 and valuenum < 20 then 12
+    when itemid in (780,860,1126,1673,1880,3839,4202,4753,8387,220274,220734,223830) then 12
     -- paco2 in %
     when itemid in (778) then 13
     -- sa02 in %
-    when itemid in (834,3495,3609,8532) and valuenum >= 0 and valuenum <= 100 then 14
+    when itemid in (834,3495,3609,8532) then 14
     -- AST 
     when itemid in (770,220587) then 15
     -- BUN
-    when itemid in (781,1162,3737,225624) and valuenum <= 270 then 16
+    when itemid in (781,1162,3737,225624) then 16
     -- Alkaline phosphate
-    when itemid in (773,3728,22561) and valuenum <= 1000 then 17
+    when itemid in (773,3728,22561) then 17
     -- calcium
     when itemid in (786,816,1522,3746,225625,225667) then 18
     -- chloride
     when itemid in (788,1523,3747,220602,226536) then 19
+    -- creatinine
+    when itemid in (791,1525,3750,220615) then 20
+    -- bilirubin direct
+    when itemid in (225651) then 21
+    -- bilirubin total
+    when itemid in (225690) then 22
+    -- lactic acid
+    when itemid in (818,1531,225668) then 23
+    -- magnesium
+    when itemid in (821,1532,220635) then 24
+    -- potassium
+    when itemid in (829,1535,3792,227442,227464) then 25
+    -- troponin
+    when itemid in (851,227429) then 26
+    -- hemotacrit
+    when itemid in (813,3761,220545,226540) then 27
+    -- hemoglobin
+    when itemid in (814,3759,220228) then 28
+    -- ptt
+    when itemid in (825,1533,227466) then 29
+    -- wbc
+    when itemid in (861,1127,1542,4200,220546) then 30
+    -- fibrinogen
+    when itemid in (806,1528,227468) then 31
+    -- platelets
+    when itemid in (828) then 32
     else null end as var_id
 
   , valuenum
@@ -145,7 +171,6 @@ with inter as
   , 74 -- Base Excess
   , 776 -- Arterial Base Excess
   , 3740 -- Base Excess (other)
-  , 3829 -- Venous Base Excess
   , 4196 -- Base Excess (cap)
   , 224828 -- Arterial Base Excess
 
@@ -215,6 +240,69 @@ with inter as
   , 3747 -- Chloride (100-112)
   , 220602 -- Chloride (serum)
   , 226536 -- Chloride (whole blood)
+
+  -- creatinine
+  , 791 -- Creatinine (0-1.3)
+  , 1525 -- Creatinine
+  , 3750 -- Creatinine (0-0.7)
+  , 220615 -- Creatinine
+
+  -- bilirubin
+  , 225651 -- Direct Bilirubin
+  , 225690 -- Total Bilirubin
+
+  -- lactic acid
+  , 818 -- Lactic Acid (0.5-2.0)
+  , 1531 -- Lactic Acid
+  , 225668 -- Lactic Acid
+
+  -- magnesium
+  , 821 -- Magnesium (1.6-2.6)
+  , 1532 -- Magnesium
+  , 220635 -- Magnesium
+
+  -- potassium
+  , 829 -- Potassium (3.5-5.3)
+  , 1535 -- Potassium 
+  , 3792 -- Potassium (3.5-5.3)
+  , 227442 -- Potassium (serum)
+  , 227464 -- Potassium (whole blood)
+
+  -- troponin
+  , 851 -- Troponin
+  , 227429 -- Troponin-T
+
+  -- hematocrit
+  , 813 -- Hematocrit
+  , 3761 -- Hematocrit (35-51)
+  , 220545 -- Hematocrit (serum)
+  , 226540 -- Hematocrit (whole blood -calc)
+
+  -- hemoglobin
+  , 814 -- Hemoglobin
+  , 3759 -- HGB (10.8-15.8)
+  , 220228 -- Hemoglobin
+
+  -- ptt
+  , 825 -- PTT (22-35)
+  , 1533 -- PTT
+  , 227466 -- PTT
+
+  -- wbc
+  , 861 -- WBC (4-11,000)
+  , 1127 -- WBC (4-11,000)
+  , 1542 -- WBC
+  , 4200 -- WBC 4.0-11.0
+  , 220546 -- WBC
+
+  -- fibrinogen
+  , 806 -- Fibrinogen (150-400)
+  , 1528 -- Fibrinogen
+  , 227468 -- Fibrinogen
+
+  -- platelets
+  , 828 -- Platelets
+
 )
 )
 
@@ -262,6 +350,19 @@ SELECT subject_id, hadm_id, icustay_id, dob, gender, admission_age, admittime, i
 , case when var_id = 17 then valuenum else null end as alp
 , case when var_id = 18 then valuenum else null end as calcium
 , case when var_id = 19 then valuenum else null end as chloride
+, case when var_id = 20 then valuenum else null end as creatinine
+, case when var_id = 21 then valuenum else null end as bilirubin_direct
+, case when var_id = 22 then valuenum else null end as bilirubin_total
+, case when var_id = 23 then valuenum else null end as lactic_acid
+, case when var_id = 24 then valuenum else null end as magnesium
+, case when var_id = 25 then valuenum else null end as potassium
+, case when var_id = 26 then valuenum else null end as troponin
+, case when var_id = 27 then valuenum else null end as hematocrit
+, case when var_id = 28 then valuenum else null end as hemoglobin
+, case when var_id = 29 then valuenum else null end as ptt
+, case when var_id = 30 then valuenum else null end as wbc
+, case when var_id = 31 then valuenum else null end as fibrinogen
+, case when var_id = 32 then valuenum else null end as platelets
 
   -- time period between hospital admission and its 1st icu visit in days 
   , round((cast(extract(epoch from intime - admittime)/(60*60*24) as numeric)), 2) as
