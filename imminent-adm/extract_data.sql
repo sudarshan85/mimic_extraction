@@ -438,7 +438,7 @@ SELECT subject_id, hadm_id, icustay_id, dob, gender, admission_age, admittime, i
   -- else 15 end as ne_chartinterval
 
 from inter
-where include_adm = true
-and include_icu = true
-and admission_age >= 15.0
+where include_adm = true -- only include subjects with one admission or previous admission more than 30 days ago
+and include_icu = true -- only include subjects' first ICU visit for that admission
+and admission_age >= 15.0 -- only include adult subjects
 order by hadm_id, icustay_id;
