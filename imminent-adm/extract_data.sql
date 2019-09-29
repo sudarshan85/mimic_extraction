@@ -46,7 +46,7 @@ with inter as
     -- sbp, dbp, map
     when itemid in (51,442,455,6701,220179,220050) and valuenum > 0 and valuenum < 400 then 2
     when itemid in (8368,8440,8441,8555,220180,220051) and valuenum > 0 and valuenum < 300 then 3 
-    when itemid in (456,52,6702,443,220052,220181,225312) and valuenum > 0 and valuenum < 300 then 5
+    when itemid in (456,52,6702,443,220052,220181,225312) and valuenum > 0 and valuenum < 300 then 4
     -- resp
     when itemid in (615,618,220210,224690) and valuenum > 0 and valuenum < 70 then 5
     -- temp
@@ -348,12 +348,16 @@ SELECT subject_id, hadm_id, icustay_id, dob, gender, admission_age, admittime, i
 
 -- convert paco2 % to fraction
 , case
-  when var_id = 13 then valuenum/100
-  else null end as paco2 
+  when var_id = 13 and valuenum > 100 then 1
+  when var_id = 13 and valuenum <= 1 then valuenum
+  when var_id = 13 and valuenum > 1 then valuenum/100
+  else null end as paco2
 
--- convert sao2 % to fraction
+-- convert sao2% to fraction
 , case
-  when var_id = 14 then valuenum/100
+  when var_id = 14 and valuenum > 100 then 1
+  when var_id = 14 and valuenum <= 1 then valuenum
+  when var_id = 14 and valuenum > 1 then valuenum/100
   else null end as sao2
 
 , case when var_id = 15 then valuenum else null end as ast
