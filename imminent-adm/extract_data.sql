@@ -317,7 +317,7 @@ with inter as
 
 SELECT subject_id, hadm_id, icustay_id, dob, gender, admission_age, admittime, intime, ce_charttime
 , ethnicity, deathtime, admission_type
--- , ne_charttime, gender, charttime
+-- , ne_charttime, description, category, text
 
 -- Easier names
 , case when var_id = 1 then valuenum else null end as hr
@@ -387,6 +387,10 @@ SELECT subject_id, hadm_id, icustay_id, dob, gender, admission_age, admittime, i
   , round((cast(extract(epoch from intime - ce_charttime)/(60*60*24) as numeric)), 2) as
   ce_charttime_to_icu_period
 
+  -- time period between note charttime and 1st icu visit in days
+  -- , round((cast(extract(epoch from intime - ne_charttime)/(60*60*24) as numeric)), 2) as
+  -- ne_charttime_to_icu_period
+
 , case
   when ce_charttime between intime - interval '1 day' and intime then 0
   when ce_charttime between intime - interval '2 days' and intime - interval '1 day' then 1
@@ -409,6 +413,29 @@ SELECT subject_id, hadm_id, icustay_id, dob, gender, admission_age, admittime, i
   when ce_charttime between intime - interval '15 days' and intime - interval '14 days' then
     14 
   else 15 end as ce_chartinterval
+
+-- , case
+  -- when ne_charttime between intime - interval '1 day' and intime then 0
+  -- when ne_charttime between intime - interval '2 days' and intime - interval '1 day' then 1
+  -- when ne_charttime between intime - interval '3 days' and intime - interval '2 days' then 2
+  -- when ne_charttime between intime - interval '4 days' and intime - interval '3 days' then 3
+  -- when ne_charttime between intime - interval '5 days' and intime - interval '4 days' then 4
+  -- when ne_charttime between intime - interval '6 days' and intime - interval '5 days' then 5
+  -- when ne_charttime between intime - interval '7 days' and intime - interval '6 days' then 6
+  -- when ne_charttime between intime - interval '8 days' and intime - interval '7 days' then 7
+  -- when ne_charttime between intime - interval '9 days' and intime - interval '8 days' then 8
+  -- when ne_charttime between intime - interval '10 days' and intime - interval '9 days' then 9
+  -- when ne_charttime between intime - interval '11 days' and intime - interval '10 days' then
+    -- 10 
+  -- when ne_charttime between intime - interval '12 days' and intime - interval '11 days' then
+    -- 11 
+  -- when ne_charttime between intime - interval '13 days' and intime - interval '12 days' then
+    -- 12 
+  -- when ne_charttime between intime - interval '14 days' and intime - interval '13 days' then
+    -- 13 
+  -- when ne_charttime between intime - interval '15 days' and intime - interval '14 days' then
+    -- 14 
+  -- else 15 end as ne_chartinterval
 
 from inter
 where include_adm = true

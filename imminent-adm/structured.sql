@@ -39,7 +39,7 @@ with inter as
     -- sbp, dbp, map
     when itemid in (51,442,455,6701,220179,220050) and valuenum > 0 and valuenum < 400 then 2
     when itemid in (8368,8440,8441,8555,220180,220051) and valuenum > 0 and valuenum < 300 then 3 
-    when itemid in (456,52,6702,443,220052,220181,225312) and valuenum > 0 and valuenum < 300 then 5
+    when itemid in (456,52,6702,443,220052,220181,225312) and valuenum > 0 and valuenum < 300 then 4
     -- resp
     when itemid in (615,618,220210,224690) and valuenum > 0 and valuenum < 70 then 5
     -- temp
