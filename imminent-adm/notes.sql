@@ -2,8 +2,8 @@
 -- MIMIC version: MIMIC-III v1.4
 -- ------------------------------------------------------------------
 
-drop materialized view if exists co cascade;
-create materialized view co as
+drop materialized view if exists notes cascade;
+create materialized view notes as
 
 with inter as
 (
@@ -20,7 +20,7 @@ with inter as
   , pat.subject_id
   , pat.dob
   , pat.gender
-  , ne.charttime
+  , ne.charttime as ne_charttime
   , ne.category
   , ne.description
   , ne.text
@@ -48,9 +48,9 @@ with inter as
   , round((cast(extract(epoch from ie.intime - ne.charttime)/(60*60*24) as numeric)), 2) as
   charttime_to_icu_period
 
-  , case
-    when ie.los >= 5.0 or adm.deathtime between ie.intime and ie.intime + interval '5 days' then 1
-    else 0 end as prolonged_stay_label
+  -- , case
+    -- when ie.los >= 5.0 or adm.deathtime between ie.intime and ie.intime + interval '5 days' then 1
+    -- else 0 end as prolonged_stay_label
 
   , case
     when ne.charttime between ie.intime - interval '1 day' and ie.intime then 0
@@ -76,13 +76,13 @@ with inter as
     else 15 end as chartinterval
 
   -- create labels for charttimes
-  , case
-    when ne.charttime between ie.intime - interval '1 day' and ie.intime then -1
-    when ne.charttime between ie.intime - interval '3 days' and ie.intime - interval '1 day' then
-      1
-    when ne.charttime between ie.intime - interval '5 days' and ie.intime - interval '3 day' then
-      -1
-    else 0 end as imminent_adm_label
+  -- , case
+    -- when ne.charttime between ie.intime - interval '1 day' and ie.intime then -1
+    -- when ne.charttime between ie.intime - interval '3 days' and ie.intime - interval '1 day' then
+      -- 1
+    -- when ne.charttime between ie.intime - interval '5 days' and ie.intime - interval '3 day' then
+      -- -1
+    -- else 0 end as imminent_adm_label
 
   from admissions adm
   inner join icustays ie on adm.hadm_id = ie.hadm_id
@@ -109,7 +109,7 @@ select hadm_id
 , dischtime
 , intime
 , outtime
-, charttime
+, ne_charttime
 , los as icu_los
 , deathtime
 , adm_to_icu_period
@@ -118,12 +118,11 @@ select hadm_id
 , ethnicity
 , dob
 , gender
-, admission_age
 , category
 , description
 , text
-, imminent_adm_label
-, prolonged_stay_label
+-- , imminent_adm_label
+-- , prolonged_stay_label
 
 from inter
 where

@@ -10,12 +10,17 @@ with inter as
   select adm.hadm_id
   , adm.admittime
   , adm.dischtime
-  , ie.subject_id
+  , adm.admission_type
+  , adm.ethnicity
+  , adm.deathtime
   , ie.icustay_id
-  , ce.charttime
   , ie.intime
+  , ie.outtime
+  , ie.los
+  , pat.subject_id
   , pat.dob
   , pat.gender
+  , ce.charttime as ce_charttime
 
   , case
       when dense_rank() over (partition by ie.hadm_id order by ie.intime) = 1 then true
@@ -102,14 +107,9 @@ with inter as
   , valuenum
 
   from admissions adm
-  inner join icustays ie on adm.hadm_id = ie.hadm_id
-  inner join patients pat on pat.subject_id = adm.subject_id
-  left join chartevents ce
-  on ie.subject_id = ce.subject_id and ie.hadm_id = ce.hadm_id and ie.icustay_id = ce.icustay_id
-  and ce.charttime between adm.admittime and ie.intime
-  and adm.dischtime > adm.admittime
-  -- exclude rows marked as error
-  and ce.error IS DISTINCT FROM 1
+  inner join icustays ie on adm.hadm_id = ie.hadm_id and adm.has_chartevents_data = 1 and ie.intime > adm.admittime
+  inner join chartevents ce on adm.hadm_id = ce.hadm_id and ce.charttime between adm.admittime and ie.intime and ce.error is distinct from 1
+  inner join patients pat on adm.subject_id = pat.subject_id
   where ce.itemid in
   (
   -- HEART RATE
@@ -306,7 +306,51 @@ with inter as
 )
 )
 
-SELECT subject_id, hadm_id, icustay_id, dob, gender, admission_age, admittime, intime, charttime
+select hadm_id
+ , subject_id
+ , icustay_id
+ , admission_type
+ , admittime
+ , dischtime
+ , intime
+ , outtime
+ , ce_charttime
+ , los as icu_los
+ , deathtime
+ , ethnicity
+ , dob
+ , gender 
+
+  -- time period between hospital admission and its 1st icu visit in days 
+  , round((cast(extract(epoch from intime - admittime)/(60*60*24) as numeric)), 2) as
+  adm_to_icu_period
+
+  -- time period between structured data charttime and 1st icu visit in days
+  , round((cast(extract(epoch from intime - ce_charttime)/(60*60*24) as numeric)), 2) as
+  ce_charttime_to_icu_period
+
+, case
+  when ce_charttime between intime - interval '1 day' and intime then 0
+  when ce_charttime between intime - interval '2 days' and intime - interval '1 day' then 1
+  when ce_charttime between intime - interval '3 days' and intime - interval '2 days' then 2
+  when ce_charttime between intime - interval '4 days' and intime - interval '3 days' then 3
+  when ce_charttime between intime - interval '5 days' and intime - interval '4 days' then 4
+  when ce_charttime between intime - interval '6 days' and intime - interval '5 days' then 5
+  when ce_charttime between intime - interval '7 days' and intime - interval '6 days' then 6
+  when ce_charttime between intime - interval '8 days' and intime - interval '7 days' then 7
+  when ce_charttime between intime - interval '9 days' and intime - interval '8 days' then 8
+  when ce_charttime between intime - interval '10 days' and intime - interval '9 days' then 9
+  when ce_charttime between intime - interval '11 days' and intime - interval '10 days' then
+    10 
+  when ce_charttime between intime - interval '12 days' and intime - interval '11 days' then
+    11 
+  when ce_charttime between intime - interval '13 days' and intime - interval '12 days' then
+    12 
+  when ce_charttime between intime - interval '14 days' and intime - interval '13 days' then
+    13 
+  when ce_charttime between intime - interval '15 days' and intime - interval '14 days' then
+    14 
+  else 15 end as ce_chartinterval
 
 -- Easier names
 , case when var_id = 1 then valuenum else null end as hr
@@ -337,12 +381,16 @@ SELECT subject_id, hadm_id, icustay_id, dob, gender, admission_age, admittime, i
 
 -- convert paco2 % to fraction
 , case
-  when var_id = 13 then valuenum/100
-  else null end as paco2 
+  when var_id = 13 and valuenum > 100 then 1
+  when var_id = 13 and valuenum <= 1 then valuenum
+  when var_id = 13 and valuenum > 1 then valuenum/100
+  else null end as paco2
 
--- convert sao2 % to fraction
+-- convert sao2% to fraction
 , case
-  when var_id = 14 then valuenum/100
+  when var_id = 14 and valuenum > 100 then 1
+  when var_id = 14 and valuenum <= 1 then valuenum
+  when var_id = 14 and valuenum > 1 then valuenum/100
   else null end as sao2
 
 , case when var_id = 15 then valuenum else null end as ast
@@ -364,15 +412,8 @@ SELECT subject_id, hadm_id, icustay_id, dob, gender, admission_age, admittime, i
 , case when var_id = 31 then valuenum else null end as fibrinogen
 , case when var_id = 32 then valuenum else null end as platelets
 
-  -- time period between hospital admission and its 1st icu visit in days 
-  , round((cast(extract(epoch from intime - admittime)/(60*60*24) as numeric)), 2) as
-  adm_to_icu_period
-
-  , round((cast(extract(epoch from intime - charttime)/(60*60*24) as numeric)), 2) as
-  charttime_to_icu_period
-
 from inter
-where include_adm = true
-and include_icu = true
-and admission_age >= 15.0
+where include_adm = true -- only include subjects with one admission or previous admission more than 30 days ago
+and include_icu = true -- only include subjects' first ICU visit for that admission
+and admission_age >= 15.0 -- only include adult subjects
 order by hadm_id, icustay_id;
