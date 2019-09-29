@@ -131,7 +131,7 @@ where
 include_adm = true and
 -- only include subjects' first ICU visit for that admission
 include_icu = true and
--- -- -- only include adult subjects
+-- only include adult subjects
 admission_age >= 15.0
 order by hadm_id, icustay_id;
 
