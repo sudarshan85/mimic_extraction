@@ -13,9 +13,7 @@ with inter as
   , adm.admission_type
   , adm.ethnicity
   , adm.deathtime
-  , ie.icustay_id
   , ie.intime
-  , ie.outtime
   , ie.los
   , pat.subject_id
   , pat.dob
@@ -29,6 +27,10 @@ with inter as
       when dense_rank() over (partition by ie.hadm_id order by ie.intime) = 1 then true
       else false end as include_icu
 
+  -- time period between hospital admission and its 1st icu visit in days 
+  , round((cast(extract(epoch from intime - admittime)/(60*60*24) as numeric)), 2) as
+  adm_to_icu
+
   , case
   -- mark the first hospital adm 
       when dense_rank() over (partition by adm.subject_id order by adm.admittime) = 1 then true
@@ -41,21 +43,6 @@ with inter as
   , round((cast(extract(epoch from adm.admittime - pat.dob)/(60*60*24*365.242) as numeric)), 2) as
   admission_age
 
-
-  -- , case
-    -- when ie.los >= 5.0 or adm.deathtime between ie.intime and ie.intime + interval '5 days' then 1
-    -- else 0 end as prolonged_stay_label
-
-
-  -- create labels for charttimes
-  -- , case
-    -- when ne.charttime between ie.intime - interval '1 day' and ie.intime then -1
-    -- when ne.charttime between ie.intime - interval '3 days' and ie.intime - interval '1 day' then
-      -- 1
-    -- when ne.charttime between ie.intime - interval '5 days' and ie.intime - interval '3 day' then
-      -- -1
-    -- else 0 end as imminent_adm_label
-
   from admissions adm
   inner join icustays ie on adm.hadm_id = ie.hadm_id and adm.has_chartevents_data = 1 and ie.intime > adm.admittime
   inner join noteevents ne on adm.hadm_id = ne.hadm_id and ne.charttime between adm.admittime and ie.intime and ne.iserror is null
@@ -64,12 +51,9 @@ with inter as
 
 select hadm_id
 , subject_id
-, icustay_id
 , admission_type
-, admittime
-, dischtime
 , intime
-, outtime
+, adm_to_icu
 , ne_charttime
 , los as icu_los
 , deathtime
@@ -77,12 +61,8 @@ select hadm_id
 , dob
 , gender
 
--- time period between hospital admission and its 1st icu visit in days 
-, round((cast(extract(epoch from intime - admittime)/(60*60*24) as numeric)), 2) as
-adm_to_icu_period
-
 , round((cast(extract(epoch from intime - ne_charttime)/(60*60*24) as numeric)), 2) as
-ne_charttime_to_icu_period
+ne_charttime_to_icu
 
 , case
   when ne_charttime between intime - interval '1 day' and intime then 0
@@ -111,12 +91,9 @@ ne_charttime_to_icu_period
 , description
 , text
 
--- , imminent_adm_label
--- , prolonged_stay_label
-
 from inter
 where include_adm = true -- only include subjects with one admission or previous admission more than 30 days ago
 and include_icu = true -- only include subjects' first ICU visit for that admission
 and admission_age >= 15.0 -- only include adult subjects
-order by hadm_id, icustay_id;
+order by hadm_id;
 
