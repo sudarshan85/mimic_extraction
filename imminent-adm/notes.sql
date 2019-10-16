@@ -50,16 +50,9 @@ with inter as
 )
 
 select hadm_id
--- , subject_id
--- , admission_type
 , intime
--- , adm_to_icu
+, admittime
 , ne_charttime
--- , los as icu_los
--- , deathtime
--- , ethnicity
--- , dob
--- , gender
 
 -- , round((cast(extract(epoch from intime - ne_charttime)/(60*60*24) as numeric)), 2) as
 -- ne_charttime_to_icu

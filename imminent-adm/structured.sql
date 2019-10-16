@@ -88,7 +88,7 @@ with inter as
     when itemid in (818,1531,225668) then 23
     -- magnesium
     when itemid in (821,1532,220635) then 24
-    -- -- potassium
+    -- potassium
     when itemid in (829,1535,3792,227442,227464) then 25
     -- troponin
     when itemid in (851,227429) then 26
@@ -132,7 +132,6 @@ with inter as
   , 8555 --	Arterial BP #2 [Diastolic]
   , 220180 --	Non Invasive Blood Pressure diastolic
   , 220051 --	Arterial Blood Pressure diastolic
-
 
   -- MEAN ARTERIAL PRESSURE
   , 52 --"Arterial BP Mean"
