@@ -9,15 +9,9 @@ with inter as
 (
   select adm.hadm_id
   , adm.admittime
-  -- , adm.dischtime
-  -- , adm.admission_type
-  -- , adm.ethnicity
-  -- , adm.deathtime
   , ie.intime
-  -- , ie.los
   , pat.subject_id
   , pat.dob
-  -- , pat.gender
   , ce.charttime as ce_charttime
 
   , case
@@ -308,43 +302,7 @@ with inter as
 )
 
 select hadm_id
- -- , subject_id
- -- , admission_type
- -- , intime
--- , adm_to_icu
  , ce_charttime
- -- , los as icu_los
- -- , deathtime
- -- , ethnicity
- -- , dob
- -- , gender 
-
-  -- time period between structured data charttime and 1st icu visit in days
-  -- , round((cast(extract(epoch from intime - ce_charttime)/(60*60*24) as numeric)), 2) as
-  -- ce_charttime_to_icu
-
--- , case
-  -- when ce_charttime between intime - interval '1 day' and intime then 0
-  -- when ce_charttime between intime - interval '2 days' and intime - interval '1 day' then 1
-  -- when ce_charttime between intime - interval '3 days' and intime - interval '2 days' then 2
-  -- when ce_charttime between intime - interval '4 days' and intime - interval '3 days' then 3
-  -- when ce_charttime between intime - interval '5 days' and intime - interval '4 days' then 4
-  -- when ce_charttime between intime - interval '6 days' and intime - interval '5 days' then 5
-  -- when ce_charttime between intime - interval '7 days' and intime - interval '6 days' then 6
-  -- when ce_charttime between intime - interval '8 days' and intime - interval '7 days' then 7
-  -- when ce_charttime between intime - interval '9 days' and intime - interval '8 days' then 8
-  -- when ce_charttime between intime - interval '10 days' and intime - interval '9 days' then 9
-  -- when ce_charttime between intime - interval '11 days' and intime - interval '10 days' then
-    -- 10 
-  -- when ce_charttime between intime - interval '12 days' and intime - interval '11 days' then
-    -- 11 
-  -- when ce_charttime between intime - interval '13 days' and intime - interval '12 days' then
-    -- 12 
-  -- when ce_charttime between intime - interval '14 days' and intime - interval '13 days' then
-    -- 13 
-  -- when ce_charttime between intime - interval '15 days' and intime - interval '14 days' then
-    -- 14 
-  -- else 15 end as ce_chartinterval
 
 -- Easier names
 , case when var_id = 1 then valuenum else null end as hr
