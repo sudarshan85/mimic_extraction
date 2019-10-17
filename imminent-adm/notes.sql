@@ -13,7 +13,6 @@ with inter as
   , ie.los
   , pat.subject_id
   , pat.dob
-  -- , pat.gender
   , ne.charttime as ne_charttime
   , ne.category
   , ne.description
@@ -22,10 +21,6 @@ with inter as
   , case
       when dense_rank() over (partition by ie.hadm_id order by ie.intime) = 1 then true
       else false end as include_icu
-
-  -- time period between hospital admission and its 1st icu visit in days 
-  -- , round((cast(extract(epoch from intime - admittime)/(60*60*24) as numeric)), 2) as
-  -- adm_to_icu
 
   , case
   -- mark the first hospital adm 
