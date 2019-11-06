@@ -4,8 +4,8 @@
 -- NOTE: I made sure that the hadm_ids produced by the query are all the
 -- same hadm_ids in the original notes_df produced after prepping
 
-drop materialized view if exists cohort cascade;
-create materialized view cohort as
+drop materialized view if exists notes_all_co cascade;
+create materialized view notes_all_co as
 
 with inter as
 (
@@ -22,7 +22,7 @@ with inter as
   admission_age
 
   from admissions adm
-  inner join co_adms ca on adm.hadm_id = ca.hadm_id 
+  inner join notes_all_adms ca on adm.hadm_id = ca.hadm_id 
   inner join patients pat on pat.subject_id = adm.subject_id
 )
 
